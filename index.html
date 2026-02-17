@@ -264,11 +264,68 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 /* ═══ SECTION TRANSITIONS ═══ */
 #tabContent>div{animation:slideIn .3s cubic-bezier(.4,0,.2,1) both}
 .glass{transition:box-shadow .3s ease,border-color .3s ease,transform .2s ease}
+/* ═══ ADMIN PAGE ═══ */
+.admin-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.admin-overlay.show{opacity:1;pointer-events:auto}
+.admin-pin-modal{background:#fff;border-radius:20px;padding:32px 28px;max-width:340px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);transform:scale(.9);transition:transform .3s}
+.admin-overlay.show .admin-pin-modal{transform:scale(1)}
+.admin-pin-title{font-size:16px;font-weight:900;margin-bottom:4px;color:#333}
+.admin-pin-sub{font-size:11px;color:#999;margin-bottom:20px}
+.admin-pin-input{width:180px;text-align:center;font-size:28px;font-weight:900;letter-spacing:12px;border:2px solid #E5E7EB;border-radius:14px;padding:14px;outline:none;font-family:monospace;transition:border-color .2s}
+.admin-pin-input:focus{border-color:var(--c);box-shadow:0 0 0 3px rgba(139,69,19,.1)}
+.admin-pin-error{font-size:11px;color:#EF4444;font-weight:700;margin-top:8px;min-height:16px}
+.admin-section-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;transition:all .2s}
+.admin-section-card:hover{border-color:var(--c);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.admin-section-title{font-size:13px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.admin-asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:12px}
+.admin-asset-item{position:relative;width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;border:2px solid transparent;cursor:pointer;transition:all .2s}
+.admin-asset-item:hover{border-color:var(--c);transform:scale(1.03)}
+.admin-asset-item.selected{border-color:var(--c);box-shadow:0 0 0 3px rgba(139,69,19,.15)}
+.admin-asset-item img{width:100%;height:100%;object-fit:cover}
+.admin-asset-item .admin-asset-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.9);color:#fff;border:none;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.admin-asset-item:hover .admin-asset-del{opacity:1}
+.admin-icon-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.admin-icon-btn{width:100%;aspect-ratio:1;border-radius:10px;border:1.5px solid #eee;background:#fafafa;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.admin-icon-btn:hover{background:rgba(139,69,19,.06);border-color:var(--c)}
+.admin-icon-btn.selected{background:rgba(139,69,19,.1);border-color:var(--c);box-shadow:0 0 0 2px rgba(139,69,19,.15)}
+.admin-color-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.admin-color-swatch{width:100%;aspect-ratio:1;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.admin-color-swatch:hover{transform:scale(1.1)}
+.admin-color-swatch.selected{border-color:#333;box-shadow:0 0 0 2px rgba(0,0,0,.2)}
+.admin-gradient-preview{width:100%;height:80px;border-radius:12px;margin-bottom:8px;border:1px solid #eee}
+.admin-preview-mini{width:100%;max-height:200px;border-radius:12px;overflow:hidden;background:#f5f5f5;margin-top:12px;border:1px solid #eee}
+.admin-preview-mini .ppt-slide{font-size:1.2cqw!important;margin:0!important;box-shadow:none!important;border-radius:0!important;min-height:0!important}
+.admin-upload-zone{border:2px dashed rgba(139,69,19,.2);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:all .2s}
+.admin-upload-zone:hover{border-color:var(--c);background:rgba(139,69,19,.03)}
+.admin-setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.admin-setting-row:last-child{border-bottom:none}
+.admin-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:700;background:#E8F5E9;color:#2E7D32}
+[data-theme="dark"] .admin-pin-modal{background:var(--card);color:var(--text)}
+[data-theme="dark"] .admin-pin-input{background:var(--bg);color:var(--text);border-color:var(--border)}
+[data-theme="dark"] .admin-section-card{background:var(--card);border-color:var(--border)}
+[data-theme="dark"] .admin-icon-btn{background:var(--card);border-color:var(--border)}
+[data-theme="dark"] .admin-upload-zone{border-color:rgba(161,136,127,.25)}
+@media print{.admin-overlay{display:none!important}}
 </style>
 </head>
 <body>
 <!-- Skip to content for accessibility -->
 <a href="#tabContent" class="skip-link" tabindex="0">Skip to content</a>
+
+<!-- Admin PIN overlay -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-pin-modal">
+    <div style="font-size:36px;margin-bottom:8px">&#x1F512;</div>
+    <div class="admin-pin-title">관리자 인증</div>
+    <div class="admin-pin-sub">PIN 번호를 입력하세요 (기본: 1234)</div>
+    <input type="password" class="admin-pin-input" id="adminPinInput" maxlength="8" placeholder="****" autocomplete="off">
+    <div class="admin-pin-error" id="adminPinError"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:center">
+      <button onclick="closeAdminPin()" style="padding:10px 24px;border-radius:10px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#888">취소</button>
+      <button onclick="verifyAdminPin()" style="padding:10px 24px;border-radius:10px;border:none;background:var(--c);color:#fff;font-size:12px;font-weight:900;cursor:pointer">확인</button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast notification -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -289,6 +346,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <button id="mPrev" onclick="setMode('preview')" role="tab" aria-selected="false" aria-label="Preview mode"><i class="ri-eye-line"></i> 미리보기</button>
   <button id="mPrint" onclick="printProposal()" style="background:rgba(59,130,246,.08);color:#3B82F6;border:1.5px solid rgba(59,130,246,.2)" aria-label="Print"><i class="ri-printer-line"></i> 인쇄</button>
   <button id="mPdf" onclick="downloadPDF()" style="background:rgba(16,185,129,.08);color:#059669;border:1.5px solid rgba(16,185,129,.2)" aria-label="Download PDF"><i class="ri-download-2-line"></i> PDF</button>
+  <button id="mAdmin" onclick="S.adminAuth?setTab('admin'):openAdminPin()" style="background:rgba(139,69,19,.08);color:var(--c);border:1.5px solid rgba(139,69,19,.2)" aria-label="Admin"><i class="ri-settings-4-line"></i></button>
 </div>
 
 <div class="wrap" id="editView" role="main" aria-label="Proposal editor">
@@ -386,7 +444,25 @@ let S={
   clients:[],
   selectedClient:null,
   savedProposals:[],
-  compareIds:[]
+  compareIds:[],
+  adminAuth:false,
+  adminPin:'1234',
+  adminAssets:{
+    brand_header:{icon:'',bg:'linear-gradient(160deg,#1A237E 0%,#0D1442 40%,#8D6E63 100%)',bgType:'gradient',images:[]},
+    story:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    menu:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    space:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    setup:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    area:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    revenue:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    cost:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    labor:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    roi:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    comp:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    support:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    closing:{icon:'',bg:'#ffffff',bgType:'solid',images:[]},
+    sign:{icon:'',bg:'#ffffff',bgType:'solid',images:[]}
+  }
 };
 
 function bSch(st,en,ds){let s={};DAYS.forEach(d=>{s[d]={on:ds.includes(d),start:st,end:en}});return s;}
@@ -1310,7 +1386,7 @@ function render(){
 }
 
 function setMode(m){S.mode=m;document.querySelectorAll('.mode-bar button[role=tab]').forEach(b=>{let isOn=b.id==='m'+(m==='edit'?'Edit':'Prev');b.classList.toggle('on',isOn);b.setAttribute('aria-selected',isOn?'true':'false');});render();}
-function setTab(t){S.tab=t;render();}
+function setTab(t){if(t==='admin'&&!S.adminAuth){openAdminPin();return;}S.tab=t;render();}
 function upd(){render();autoSave();saveKeys();}
 // Also ensure h() handles onInput event
 
@@ -1323,13 +1399,16 @@ const TABS=[
   {id:"cost",icon:"ri-file-list-3-line",label:"수익분석"},{id:"labor",icon:"ri-team-line",label:"인건비"},{id:"roi",icon:"ri-funds-line",label:"ROI"},{id:"scenario",icon:"ri-git-branch-line",label:"시나리오"},
   {id:"media",icon:"ri-image-line",label:"파일"},
   {id:"comp",icon:"ri-scales-3-line",label:"경쟁"},{id:"support",icon:"ri-building-line",label:"본사지원"},{id:"closing",icon:"ri-focus-3-line",label:"클로징"},
-  {id:"sign",icon:"ri-quill-pen-line",label:"서명"},{id:"compare",icon:"ri-bar-chart-grouped-line",label:"비교"}
+  {id:"sign",icon:"ri-quill-pen-line",label:"서명"},{id:"compare",icon:"ri-bar-chart-grouped-line",label:"비교"},
+  {id:"admin",icon:"ri-settings-4-line",label:"관리자"}
 ];
 
 function renderTabs(){
   let bar=document.getElementById('tabBar');
   bar.innerHTML='';
-  TABS.forEach(t=>{let b=document.createElement('button');b.innerHTML='<i class="'+t.icon+'" aria-hidden="true"></i> '+t.label;b.className=S.tab===t.id?'on':'';b.onclick=()=>setTab(t.id);b.setAttribute('role','tab');b.setAttribute('aria-selected',S.tab===t.id?'true':'false');b.setAttribute('aria-label',t.label+' tab');b.setAttribute('tabindex',S.tab===t.id?'0':'-1');bar.appendChild(b);});
+  TABS.forEach(t=>{
+    if(t.id==='admin'&&!S.adminAuth)return; // Hide admin tab unless authenticated
+    let b=document.createElement('button');b.innerHTML='<i class="'+t.icon+'" aria-hidden="true"></i> '+t.label;b.className=S.tab===t.id?'on':'';b.onclick=()=>setTab(t.id);b.setAttribute('role','tab');b.setAttribute('aria-selected',S.tab===t.id?'true':'false');b.setAttribute('aria-label',t.label+' tab');b.setAttribute('tabindex',S.tab===t.id?'0':'-1');bar.appendChild(b);});
   // Keyboard navigation for tabs
   bar.onkeydown=function(e){
     let tabs=Array.from(bar.querySelectorAll('[role=tab]'));
@@ -1421,6 +1500,7 @@ function renderEdit(){
   else if(T==="closing") el.appendChild(renderClosing());
   else if(T==="sign") el.appendChild(renderSign());
   else if(T==="compare") el.appendChild(renderCompare());
+  else if(T==="admin") el.appendChild(renderAdmin());
 }
 
 function renderBasic(){
@@ -4011,7 +4091,7 @@ function downloadPDF(){
 
 /* ═══════════════ SAVE / LOAD ═══════════════ */
 function saveJSON(){
-  let d={...S};delete d.tab;delete d.mode;delete d.geminiKey;delete d.claudeKey;delete d.gDriveClientId;delete d.gDriveApiKey;
+  let d={...S};delete d.tab;delete d.mode;delete d.geminiKey;delete d.claudeKey;delete d.gDriveClientId;delete d.gDriveApiKey;delete d.adminAuth;delete d.adminAssets;delete d.adminPin;
   let blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
   let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(S.brand||'제안서')+'_'+(S.storeName||'')+'_제안서.json';a.click();
 }
@@ -4030,6 +4110,7 @@ function autoSave(){
     try{
       let d={...S};
       delete d.tab;delete d.mode;delete d.geminiKey;delete d.claudeKey;delete d.gDriveClientId;delete d.gDriveApiKey;
+      delete d.adminAuth;delete d.adminAssets;delete d.adminPin;
       localStorage.setItem('_ps_auto',JSON.stringify(d));
       localStorage.setItem('_ps_auto_time',new Date().toISOString());
     }catch(e){
@@ -4065,9 +4146,446 @@ function autoLoad(){
 }
 
 
+/* ═══════════════ ADMIN PAGE ═══════════════ */
+const ADMIN_SECTIONS=[
+  {id:'brand_header',label:'표지 (커버)',icon:'ri-book-open-line'},
+  {id:'story',label:'브랜드 스토리',icon:'ri-fire-line'},
+  {id:'menu',label:'메뉴 구성',icon:'ri-restaurant-line'},
+  {id:'space',label:'공간/매출',icon:'ri-layout-grid-line'},
+  {id:'setup',label:'개설비용',icon:'ri-money-dollar-circle-line'},
+  {id:'area',label:'상권분석',icon:'ri-map-pin-line'},
+  {id:'revenue',label:'매출 데이터',icon:'ri-bar-chart-line'},
+  {id:'cost',label:'수익분석',icon:'ri-file-list-3-line'},
+  {id:'labor',label:'인건비',icon:'ri-team-line'},
+  {id:'roi',label:'ROI',icon:'ri-funds-line'},
+  {id:'comp',label:'경쟁 비교',icon:'ri-scales-3-line'},
+  {id:'support',label:'본사 지원',icon:'ri-building-line'},
+  {id:'closing',label:'클로징',icon:'ri-focus-3-line'},
+  {id:'sign',label:'서명',icon:'ri-quill-pen-line'}
+];
+
+const PRESET_ICONS=[
+  '🔥','💎','🏆','🎯','📊','💰','🚀','🤝',
+  '⭐','🏪','🍽️','📍','💡','🎨','📋','🛡️',
+  '✨','🌟','💪','🎉','📈','🔑','👥','🏢',
+  '🧑‍🍳','☕','🍕','🍗','🍣','🥗','🍚','🥩',
+  '📦','🎁','📱','💻','🔔','❤️','💼','🌿'
+];
+
+const PRESET_COLORS=[
+  '#1A237E','#0D47A1','#1565C0','#1976D2','#42A5F5',
+  '#B71C1C','#C62828','#D32F2F','#E53935','#EF5350',
+  '#1B5E20','#2E7D32','#388E3C','#43A047','#66BB6A',
+  '#E65100','#F57F17','#FF8F00','#FFB300','#FFC107',
+  '#4A148C','#6A1B9A','#7B1FA2','#8E24AA','#AB47BC',
+  '#3E2723','#4E342E','#5D4037','#6D4C41','#8D6E63',
+  '#212121','#424242','#616161','#9E9E9E','#BDBDBD',
+  '#006064','#00838F','#0097A7','#00ACC1','#26C6DA'
+];
+
+const PRESET_GRADIENTS=[
+  'linear-gradient(135deg,#1A237E,#8D6E63)',
+  'linear-gradient(135deg,#667eea,#764ba2)',
+  'linear-gradient(135deg,#f093fb,#f5576c)',
+  'linear-gradient(135deg,#4facfe,#00f2fe)',
+  'linear-gradient(135deg,#43e97b,#38f9d7)',
+  'linear-gradient(135deg,#fa709a,#fee140)',
+  'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+  'linear-gradient(135deg,#fccb90,#d57eeb)',
+  'linear-gradient(160deg,#0D1442 0%,#1A237E 40%,#8D6E63 100%)',
+  'linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)',
+  'linear-gradient(135deg,#2d3436,#636e72)',
+  'linear-gradient(135deg,#ee5a24,#f0932b)',
+  'linear-gradient(135deg,#6c5ce7,#a29bfe)',
+  'linear-gradient(135deg,#00b894,#00cec9)',
+  'linear-gradient(135deg,#e17055,#d63031)',
+  'linear-gradient(135deg,#fdcb6e,#e17055)'
+];
+
+let _adminEditSection=null;
+
+function openAdminPin(){
+  let ov=document.getElementById('adminOverlay');
+  ov.classList.add('show');
+  let inp=document.getElementById('adminPinInput');
+  inp.value='';
+  document.getElementById('adminPinError').textContent='';
+  setTimeout(()=>inp.focus(),200);
+  inp.onkeydown=function(e){if(e.key==='Enter')verifyAdminPin();if(e.key==='Escape')closeAdminPin();};
+}
+function closeAdminPin(){document.getElementById('adminOverlay').classList.remove('show');}
+document.getElementById('adminOverlay').addEventListener('click',function(e){if(e.target===this)closeAdminPin();});
+function verifyAdminPin(){
+  let pin=document.getElementById('adminPinInput').value;
+  let savedPin=S.adminPin||'1234';
+  if(pin===savedPin){
+    S.adminAuth=true;
+    closeAdminPin();
+    S.tab='admin';
+    upd();
+    showToast('관리자 모드 활성화');
+  } else {
+    document.getElementById('adminPinError').textContent='PIN이 올바르지 않습니다';
+    document.getElementById('adminPinInput').value='';
+    document.getElementById('adminPinInput').focus();
+  }
+}
+
+function loadAdminAssets(){
+  try{
+    let raw=localStorage.getItem('_ps_admin_assets');
+    if(raw){
+      let d=JSON.parse(raw);
+      if(d&&typeof d==='object') S.adminAssets={...S.adminAssets,...d};
+    }
+    let pin=localStorage.getItem('_ps_admin_pin');
+    if(pin) S.adminPin=pin;
+  }catch(e){}
+}
+function saveAdminAssets(){
+  try{
+    localStorage.setItem('_ps_admin_assets',JSON.stringify(S.adminAssets));
+    localStorage.setItem('_ps_admin_pin',S.adminPin||'1234');
+  }catch(e){showToast('저장 공간이 부족합니다');}
+}
+
+function adminUploadImage(sectionId,cb){
+  let inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';
+  inp.onchange=function(e){
+    let f=e.target.files[0];if(!f)return;
+    if(f.size>2*1024*1024){showToast('이미지 크기는 2MB 이하로 제한됩니다');return;}
+    let reader=new FileReader();
+    reader.onload=function(ev){
+      cb(ev.target.result,f.name);
+    };
+    reader.readAsDataURL(f);
+  };
+  inp.click();
+}
+
+function renderAdmin(){
+  if(!S.adminAuth){
+    let w=h('div',{className:'flex-col',style:{textAlign:'center',padding:'40px 20px'}});
+    w.appendChild(h('div',{style:{fontSize:'48px',marginBottom:'12px'}},'🔒'));
+    w.appendChild(h('div',{style:{fontSize:'16px',fontWeight:'900',marginBottom:'8px'}},'관리자 인증 필요'));
+    w.appendChild(h('div',{style:{fontSize:'12px',color:'#888',marginBottom:'20px'}},'관리자 페이지에 접근하려면 PIN 인증이 필요합니다'));
+    w.appendChild(h('button',{style:{padding:'14px 32px',borderRadius:'14px',border:'none',background:'linear-gradient(135deg,'+S.brandColor+','+S.brandColor+'cc)',color:'#fff',fontSize:'14px',fontWeight:'900',cursor:'pointer'},onClick:openAdminPin},'PIN 입력하기'));
+    return w;
+  }
+
+  let w=h('div',{className:'flex-col'}),c=S.brandColor;
+  if(!S.adminAssets) S.adminAssets={};
+
+  // Header
+  let hdr=h('div',{className:'glass',style:{padding:'18px',background:'linear-gradient(135deg,'+c+'08,'+c+'15)',borderLeft:'4px solid '+c}});
+  let hdrRow=h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}});
+  hdrRow.appendChild(h('div',{},
+    h('div',{style:{fontSize:'17px',fontWeight:'900',color:c,marginBottom:'4px',display:'flex',alignItems:'center',gap:'8px'}},h('i',{className:'ri-settings-4-line'}),'관리자 페이지'),
+    h('div',{style:{fontSize:'11px',color:'#888',lineHeight:'1.5'}},'각 섹션의 아이콘, 배경, 디자인 사진, 텍스트를 관리합니다')
+  ));
+  hdrRow.appendChild(h('span',{className:'admin-badge'},'인증됨'));
+  hdr.appendChild(hdrRow);
+  w.appendChild(hdr);
+
+  // PIN 변경 + 설정
+  let settingsCard=h('div',{className:'admin-section-card'});
+  settingsCard.appendChild(h('div',{className:'admin-section-title'},h('i',{className:'ri-lock-line',style:{color:c}}),'보안 설정'));
+  let pinRow=h('div',{style:{display:'flex',gap:'8px',alignItems:'center'}});
+  let pinInp=h('input',{type:'password',value:S.adminPin||'1234',placeholder:'새 PIN',style:{width:'120px',textAlign:'center',fontWeight:'800',fontSize:'16px',letterSpacing:'4px',fontFamily:'monospace'},onChange:function(e){S.adminPin=e.target.value;saveAdminAssets();showToast('PIN이 변경되었습니다');}});
+  pinRow.append(
+    h('span',{style:{fontSize:'11px',fontWeight:'700',color:'#888'}},'관리자 PIN'),
+    pinInp,
+    h('button',{style:{padding:'8px 14px',borderRadius:'8px',border:'1px solid #ddd',background:'#fafafa',fontSize:'10px',fontWeight:'700',cursor:'pointer',color:'#666'},onClick:()=>{pinInp.type=pinInp.type==='password'?'text':'password';}},'보기')
+  );
+  settingsCard.appendChild(pinRow);
+
+  // Reset + Logout
+  let actRow=h('div',{style:{display:'flex',gap:'8px',marginTop:'12px'}});
+  actRow.appendChild(h('button',{style:{padding:'8px 16px',borderRadius:'8px',border:'1px solid #EF4444',background:'#FEF2F2',fontSize:'11px',fontWeight:'700',cursor:'pointer',color:'#EF4444'},onClick:()=>{
+    if(confirm('모든 관리자 에셋 설정을 초기화하시겠습니까?')){
+      ADMIN_SECTIONS.forEach(sec=>{
+        S.adminAssets[sec.id]={icon:'',bg:'#ffffff',bgType:'solid',images:[]};
+      });
+      saveAdminAssets();showToast('에셋이 초기화되었습니다');upd();
+    }
+  }},'에셋 초기화'));
+  actRow.appendChild(h('button',{style:{padding:'8px 16px',borderRadius:'8px',border:'1px solid #888',background:'#f5f5f5',fontSize:'11px',fontWeight:'700',cursor:'pointer',color:'#666'},onClick:()=>{
+    S.adminAuth=false;S.tab='basic';upd();showToast('관리자 모드 종료');
+  }},'로그아웃'));
+  settingsCard.appendChild(actRow);
+  w.appendChild(settingsCard);
+
+  // Summary overview
+  let overviewCard=h('div',{className:'admin-section-card'});
+  overviewCard.appendChild(h('div',{className:'admin-section-title'},h('i',{className:'ri-gallery-line',style:{color:c}}),'에셋 현황'));
+  let overviewGrid=h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:'8px'}});
+  ADMIN_SECTIONS.forEach(sec=>{
+    let asset=S.adminAssets[sec.id]||{icon:'',bg:'#ffffff',bgType:'solid',images:[]};
+    let imgCount=(asset.images||[]).length;
+    let hasCustom=asset.icon||asset.bgType!=='solid'||asset.bg!=='#ffffff'||imgCount>0;
+    let card=h('div',{style:{padding:'10px',borderRadius:'10px',border:'1.5px solid '+(hasCustom?c+'44':'#eee'),background:hasCustom?c+'06':'#fafafa',cursor:'pointer',textAlign:'center',transition:'all .2s'},onClick:()=>{
+      _adminEditSection=sec.id;upd();
+      setTimeout(()=>{let el=document.getElementById('admin-detail-'+sec.id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100);
+    }});
+    card.append(
+      h('div',{style:{fontSize:'18px',marginBottom:'4px'}},asset.icon||''),
+      h('i',{className:sec.icon,style:{fontSize:'14px',color:hasCustom?c:'#ccc',display:asset.icon?'none':'block'}}),
+      h('div',{style:{fontSize:'10px',fontWeight:'700',marginTop:'4px',color:hasCustom?'#333':'#aaa'}},sec.label),
+      h('div',{style:{fontSize:'9px',color:'#888',marginTop:'2px'}},imgCount>0?imgCount+'장':'')
+    );
+    overviewGrid.appendChild(card);
+  });
+  overviewCard.appendChild(overviewGrid);
+  w.appendChild(overviewCard);
+
+  // Per-section detail cards
+  ADMIN_SECTIONS.forEach(sec=>{
+    let asset=S.adminAssets[sec.id];
+    if(!asset){asset={icon:'',bg:'#ffffff',bgType:'solid',images:[]};S.adminAssets[sec.id]=asset;}
+    if(!asset.images)asset.images=[];
+
+    let isOpen=_adminEditSection===sec.id;
+    let card=h('div',{className:'admin-section-card',id:'admin-detail-'+sec.id,style:{borderColor:isOpen?c:''}});
+
+    // Header (click to toggle)
+    let secHdr=h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer',padding:'4px 0'},onClick:()=>{_adminEditSection=isOpen?null:sec.id;upd();}});
+    secHdr.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'8px'}},
+      h('div',{style:{width:'32px',height:'32px',borderRadius:'10px',background:asset.bg||'#f5f5f5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',border:'1px solid #eee',flexShrink:'0'}},asset.icon||h('i',{className:sec.icon,style:{fontSize:'14px',color:'#aaa'}})),
+      h('div',{},
+        h('div',{style:{fontSize:'13px',fontWeight:'800'}},sec.label),
+        h('div',{style:{fontSize:'9px',color:'#888'}},(asset.images||[]).length+'장 이미지'+(asset.icon?' / 아이콘: '+asset.icon:''))
+      )
+    ));
+    secHdr.appendChild(h('i',{className:isOpen?'ri-arrow-up-s-line':'ri-arrow-down-s-line',style:{fontSize:'18px',color:'#aaa'}}));
+    card.appendChild(secHdr);
+
+    if(isOpen){
+      let detail=h('div',{style:{marginTop:'12px',paddingTop:'12px',borderTop:'1px solid #eee'}});
+
+      // ── 1. ICON MANAGEMENT ──
+      let iconSec=h('div',{style:{marginBottom:'16px'}});
+      iconSec.appendChild(h('div',{style:{fontSize:'12px',fontWeight:'800',color:c,marginBottom:'8px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-emotion-line'}),'아이콘 선택'));
+
+      // Current icon display
+      if(asset.icon){
+        let curIcon=h('div',{style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px',padding:'8px 12px',background:'#f5f5f5',borderRadius:'8px'}});
+        curIcon.append(
+          h('span',{style:{fontSize:'28px'}},asset.icon),
+          h('span',{style:{fontSize:'11px',fontWeight:'700',color:'#555'}},'현재 아이콘'),
+          h('button',{style:{marginLeft:'auto',padding:'4px 10px',borderRadius:'6px',border:'1px solid #ddd',background:'#fff',fontSize:'10px',cursor:'pointer',color:'#888'},onClick:()=>{S.adminAssets[sec.id].icon='';saveAdminAssets();upd();}},'제거')
+        );
+        iconSec.appendChild(curIcon);
+      }
+
+      // Preset icon grid
+      let iconGrid=h('div',{className:'admin-icon-grid'});
+      PRESET_ICONS.forEach(ico=>{
+        let btn=h('div',{className:'admin-icon-btn'+(asset.icon===ico?' selected':''),onClick:()=>{
+          S.adminAssets[sec.id].icon=ico;
+          saveAdminAssets();upd();
+        }},ico);
+        iconGrid.appendChild(btn);
+      });
+      iconSec.appendChild(iconGrid);
+
+      // Custom icon input
+      let customIconRow=h('div',{style:{display:'flex',gap:'6px',marginTop:'8px',alignItems:'center'}});
+      customIconRow.append(
+        h('span',{style:{fontSize:'10px',fontWeight:'600',color:'#888'}},'직접입력'),
+        h('input',{value:asset.icon||'',placeholder:'이모지 또는 텍스트',style:{width:'80px',textAlign:'center',fontSize:'18px',padding:'6px',borderRadius:'8px',border:'1px solid #ddd'},onChange:e=>{S.adminAssets[sec.id].icon=e.target.value;saveAdminAssets();upd();}})
+      );
+      iconSec.appendChild(customIconRow);
+      detail.appendChild(iconSec);
+
+      // ── 2. BACKGROUND MANAGEMENT ──
+      let bgSec=h('div',{style:{marginBottom:'16px'}});
+      bgSec.appendChild(h('div',{style:{fontSize:'12px',fontWeight:'800',color:c,marginBottom:'8px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-palette-line'}),'배경 설정'));
+
+      // Background type selector
+      let bgTypeRow=h('div',{style:{display:'flex',gap:'4px',marginBottom:'10px'}});
+      [{v:'solid',l:'단색'},{v:'gradient',l:'그라데이션'},{v:'image',l:'이미지'}].forEach(bt=>{
+        bgTypeRow.appendChild(h('button',{style:{flex:'1',padding:'8px',borderRadius:'8px',border:asset.bgType===bt.v?'2px solid '+c:'1px solid #ddd',background:asset.bgType===bt.v?c+'10':'#fff',fontSize:'11px',fontWeight:asset.bgType===bt.v?'800':'600',cursor:'pointer',color:asset.bgType===bt.v?c:'#666'},onClick:()=>{
+          S.adminAssets[sec.id].bgType=bt.v;
+          saveAdminAssets();upd();
+        }},bt.l));
+      });
+      bgSec.appendChild(bgTypeRow);
+
+      // Background preview
+      let bgPreview=h('div',{className:'admin-gradient-preview'});
+      if(asset.bgType==='image'&&asset.bgImage){
+        bgPreview.style.backgroundImage='url('+asset.bgImage+')';
+        bgPreview.style.backgroundSize='cover';bgPreview.style.backgroundPosition='center';
+      } else {
+        bgPreview.style.background=asset.bg||'#ffffff';
+      }
+      bgSec.appendChild(bgPreview);
+
+      if(asset.bgType==='solid'){
+        // Solid color picker
+        let colorGrid=h('div',{className:'admin-color-grid'});
+        PRESET_COLORS.forEach(clr=>{
+          let sw=h('div',{className:'admin-color-swatch'+(asset.bg===clr?' selected':''),style:{background:clr},onClick:()=>{
+            S.adminAssets[sec.id].bg=clr;saveAdminAssets();upd();
+          }});
+          colorGrid.appendChild(sw);
+        });
+        bgSec.appendChild(colorGrid);
+        // Custom color
+        let customClrRow=h('div',{style:{display:'flex',gap:'8px',marginTop:'8px',alignItems:'center'}});
+        customClrRow.append(
+          h('input',{type:'color',value:asset.bg&&asset.bg.startsWith('#')?asset.bg:'#ffffff',style:{width:'40px',height:'36px',borderRadius:'8px',border:'1px solid #ddd',cursor:'pointer',padding:'0'},onChange:e=>{S.adminAssets[sec.id].bg=e.target.value;saveAdminAssets();upd();}}),
+          h('input',{value:asset.bg||'',placeholder:'#FFFFFF',style:{flex:'1',fontSize:'12px',fontFamily:'monospace'},onChange:e=>{S.adminAssets[sec.id].bg=e.target.value;saveAdminAssets();upd();}})
+        );
+        bgSec.appendChild(customClrRow);
+      } else if(asset.bgType==='gradient'){
+        // Gradient presets
+        let gradGrid=h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'6px'}});
+        PRESET_GRADIENTS.forEach(grad=>{
+          let sw=h('div',{style:{width:'100%',height:'36px',borderRadius:'8px',background:grad,cursor:'pointer',border:asset.bg===grad?'2px solid #333':'2px solid transparent',transition:'all .15s'},onClick:()=>{
+            S.adminAssets[sec.id].bg=grad;saveAdminAssets();upd();
+          }});
+          gradGrid.appendChild(sw);
+        });
+        bgSec.appendChild(gradGrid);
+        // Custom gradient input
+        bgSec.appendChild(h('div',{style:{marginTop:'8px'}},
+          h('div',{style:{fontSize:'9px',color:'#888',marginBottom:'4px'}},'직접 CSS gradient 입력'),
+          h('input',{value:asset.bg||'',placeholder:'linear-gradient(135deg, #color1, #color2)',style:{fontSize:'11px',fontFamily:'monospace'},onChange:e=>{S.adminAssets[sec.id].bg=e.target.value;saveAdminAssets();upd();}})
+        ));
+      } else if(asset.bgType==='image'){
+        // Image background upload
+        let uploadBtn=h('div',{className:'admin-upload-zone',onClick:()=>{
+          adminUploadImage(sec.id,(dataUrl,name)=>{
+            S.adminAssets[sec.id].bgImage=dataUrl;
+            S.adminAssets[sec.id].bg='url(...)';
+            saveAdminAssets();upd();
+          });
+        }});
+        uploadBtn.append(
+          h('div',{style:{fontSize:'24px',marginBottom:'4px'}},'📷'),
+          h('div',{style:{fontSize:'11px',fontWeight:'700',color:'#888'}},'배경 이미지 업로드'),
+          h('div',{style:{fontSize:'9px',color:'#bbb',marginTop:'4px'}},'권장: 1920x1080, 2MB 이하')
+        );
+        bgSec.appendChild(uploadBtn);
+        if(asset.bgImage){
+          bgSec.appendChild(h('button',{style:{marginTop:'6px',padding:'6px 12px',borderRadius:'6px',border:'1px solid #ddd',background:'#fff',fontSize:'10px',cursor:'pointer',color:'#888'},onClick:()=>{delete S.adminAssets[sec.id].bgImage;S.adminAssets[sec.id].bg='#ffffff';S.adminAssets[sec.id].bgType='solid';saveAdminAssets();upd();}},'배경 이미지 제거'));
+        }
+      }
+      detail.appendChild(bgSec);
+
+      // ── 3. DESIGN IMAGES MANAGEMENT ──
+      let imgSec=h('div',{style:{marginBottom:'16px'}});
+      imgSec.appendChild(h('div',{style:{fontSize:'12px',fontWeight:'800',color:c,marginBottom:'8px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-image-2-line'}),'디자인 사진 ('+asset.images.length+')'));
+
+      // Image gallery grid
+      if(asset.images.length>0){
+        let imgGrid=h('div',{className:'admin-asset-grid'});
+        asset.images.forEach((img,imgIdx)=>{
+          let item=h('div',{className:'admin-asset-item'});
+          let imgEl=document.createElement('img');imgEl.src=img.url;imgEl.alt=img.name||'';
+          imgEl.onclick=()=>openLightbox(img.url);
+          item.appendChild(imgEl);
+          // Label overlay
+          if(img.label){
+            item.appendChild(h('div',{style:{position:'absolute',bottom:'0',left:'0',right:'0',padding:'3px 6px',background:'rgba(0,0,0,.6)',color:'#fff',fontSize:'8px',fontWeight:'700',textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}},img.label));
+          }
+          // Delete button
+          let delBtn=h('button',{className:'admin-asset-del',onClick:e=>{
+            e.stopPropagation();
+            S.adminAssets[sec.id].images.splice(imgIdx,1);
+            saveAdminAssets();upd();
+          }},'x');
+          item.appendChild(delBtn);
+          imgGrid.appendChild(item);
+        });
+        imgSec.appendChild(imgGrid);
+      }
+
+      // Upload zone for design images
+      let imgUploadZone=h('div',{className:'admin-upload-zone',onClick:()=>{
+        adminUploadImage(sec.id,(dataUrl,name)=>{
+          let label=prompt('이미지 라벨 (선택):','');
+          if(!S.adminAssets[sec.id].images) S.adminAssets[sec.id].images=[];
+          S.adminAssets[sec.id].images.push({url:dataUrl,name:name,label:label||'',date:new Date().toISOString().slice(0,10)});
+          saveAdminAssets();upd();
+        });
+      }});
+      imgUploadZone.append(
+        h('div',{style:{fontSize:'20px',marginBottom:'4px'}},'➕'),
+        h('div',{style:{fontSize:'11px',fontWeight:'700',color:'#888'}},'디자인 사진 추가'),
+        h('div',{style:{fontSize:'9px',color:'#bbb',marginTop:'2px'}},'PNG, JPG (2MB 이하)')
+      );
+      imgSec.appendChild(imgUploadZone);
+
+      // Bulk clear
+      if(asset.images.length>0){
+        imgSec.appendChild(h('button',{style:{marginTop:'6px',padding:'6px 12px',borderRadius:'6px',border:'1px solid #EF4444',background:'#FEF2F2',fontSize:'10px',cursor:'pointer',color:'#EF4444'},onClick:()=>{
+          if(confirm('이 섹션의 모든 이미지를 삭제하시겠습니까?')){
+            S.adminAssets[sec.id].images=[];saveAdminAssets();upd();
+          }
+        }},'전체 이미지 삭제'));
+      }
+      detail.appendChild(imgSec);
+
+      // ── 4. TEXT ASSIGNMENT ──
+      let textSec=h('div',{style:{marginBottom:'8px'}});
+      textSec.appendChild(h('div',{style:{fontSize:'12px',fontWeight:'800',color:c,marginBottom:'8px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-text'}),'텍스트 지정'));
+      textSec.appendChild(h('div',{style:{fontSize:'9px',color:'#888',marginBottom:'6px'}},'이 섹션에 표시할 추가 텍스트 (제안서 미리보기에 반영)'));
+      let textArea=h('textarea',{value:asset.customText||'',placeholder:'섹션에 추가할 텍스트를 입력하세요...',style:{width:'100%',minHeight:'60px',border:'1px solid #ddd',borderRadius:'10px',padding:'10px',fontSize:'11px',lineHeight:'1.6',resize:'vertical',fontFamily:'inherit'},onChange:e=>{
+        S.adminAssets[sec.id].customText=e.target.value;saveAdminAssets();
+      }});
+      textSec.appendChild(textArea);
+      detail.appendChild(textSec);
+
+      card.appendChild(detail);
+    }
+    w.appendChild(card);
+  });
+
+  // Export/Import admin assets
+  let ioCard=h('div',{className:'admin-section-card'});
+  ioCard.appendChild(h('div',{className:'admin-section-title'},h('i',{className:'ri-folder-transfer-line',style:{color:c}}),'에셋 내보내기/가져오기'));
+  let ioRow=h('div',{style:{display:'flex',gap:'8px'}});
+  ioRow.appendChild(h('button',{style:{flex:'1',padding:'10px',borderRadius:'10px',border:'1px solid #ddd',background:'#fafafa',fontSize:'11px',fontWeight:'700',cursor:'pointer',color:'#666'},onClick:()=>{
+    let data=JSON.stringify(S.adminAssets,null,2);
+    let blob=new Blob([data],{type:'application/json'});
+    let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='admin_assets_export.json';a.click();
+    showToast('에셋이 내보내졌습니다');
+  }},'내보내기'));
+  let importInp=document.createElement('input');importInp.type='file';importInp.accept='.json';importInp.style.display='none';
+  importInp.onchange=function(e){
+    let f=e.target.files[0];if(!f)return;
+    let r=new FileReader();r.onload=function(ev){
+      try{
+        let d=JSON.parse(ev.target.result);
+        S.adminAssets={...S.adminAssets,...d};
+        saveAdminAssets();showToast('에셋이 가져왔습니다');upd();
+      }catch(err){showToast('파일 형식 오류');}
+    };r.readAsText(f);
+  };
+  ioRow.appendChild(h('button',{style:{flex:'1',padding:'10px',borderRadius:'10px',border:'1px solid #ddd',background:'#fafafa',fontSize:'11px',fontWeight:'700',cursor:'pointer',color:'#666'},onClick:()=>importInp.click()},'가져오기'));
+  ioRow.appendChild(importInp);
+  ioCard.appendChild(ioRow);
+
+  // Storage usage
+  let storageInfo='';
+  try{
+    let total=0;for(let k in localStorage){if(localStorage.hasOwnProperty(k))total+=localStorage[k].length;}
+    storageInfo=Math.round(total/1024)+'KB 사용 중';
+  }catch(e){}
+  if(storageInfo){
+    ioCard.appendChild(h('div',{style:{marginTop:'8px',fontSize:'10px',color:'#aaa',textAlign:'center'}},'localStorage: '+storageInfo));
+  }
+  w.appendChild(ioCard);
+
+  return w;
+}
+
 /* ═══════════════ INIT ═══════════════ */
 // API keys are user-provided only - no hardcoded defaults for security
-autoLoad();loadKeys();loadDarkMode();render();
+loadAdminAssets();autoLoad();loadKeys();loadDarkMode();render();
 
 // Keyboard shortcut: Ctrl+S to save
 document.addEventListener('keydown',function(e){

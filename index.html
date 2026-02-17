@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{--c:#8D6E63;--bg:#F9F9F9;--card:#FFFFFF;--text:#111;--sub:#666;--border:rgba(0,0,0,.06);--r:16px;--shadow:0 2px 8px rgba(0,0,0,.03),0 10px 32px rgba(0,0,0,.04)}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -214,6 +215,55 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:#333;color:#fff;padding:12px 24px;border-radius:12px;font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:all .4s cubic-bezier(.4,0,.2,1);pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 [data-theme="dark"] .toast{background:#fff;color:#333}
+/* ═══ CHART CONTAINERS ═══ */
+.chart-container{position:relative;width:100%;max-height:280px;margin:8px 0}
+.chart-container canvas{max-height:280px}
+/* ═══ FINANCIAL DASHBOARD ═══ */
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.dash-metric{padding:14px;border-radius:14px;text-align:center;transition:transform .2s,box-shadow .2s}
+.dash-metric:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.dash-metric .dash-value{font-size:22px;font-weight:900;line-height:1.2;margin:4px 0}
+.dash-metric .dash-label{font-size:10px;font-weight:600;color:var(--sub);letter-spacing:-.2px}
+.dash-metric .dash-sub{font-size:9px;color:#9CA3AF;margin-top:2px}
+/* ═══ SCENARIO ANALYSIS ═══ */
+.scenario-card{padding:14px;border-radius:14px;border:2px solid transparent;transition:all .3s;cursor:pointer}
+.scenario-card.active{border-color:var(--c);box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.scenario-card:hover{background:rgba(0,0,0,.01)}
+.scenario-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.scenario-values{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.scenario-val{text-align:center;padding:6px;background:#f9f9f9;border-radius:8px}
+.scenario-val .sv-label{font-size:9px;color:#888;font-weight:600}
+.scenario-val .sv-num{font-size:14px;font-weight:900}
+/* ═══ LOADING SKELETON ═══ */
+@keyframes skeleton{0%{background-position:-200px 0}100%{background-position:200px 0}}
+.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200px 100%;animation:skeleton 1.5s infinite;border-radius:8px;height:16px;margin:4px 0}
+/* ═══ DARK MODE ADDITIONS ═══ */
+[data-theme="dark"] .dashboard-grid .dash-metric{background:var(--card);border:1px solid var(--border)}
+[data-theme="dark"] .scenario-card{background:var(--card);border-color:var(--border)}
+[data-theme="dark"] .scenario-card.active{border-color:var(--c)}
+[data-theme="dark"] .scenario-val{background:rgba(255,255,255,.05)}
+[data-theme="dark"] .chart-container canvas{filter:none}
+[data-theme="dark"] .drop-zone-text{color:var(--sub)}
+[data-theme="dark"] .file-cat-card{background:var(--card);border-color:var(--border)}
+[data-theme="dark"] .client-card{background:var(--card);border-color:var(--border);color:var(--text)}
+[data-theme="dark"] .template-card{background:var(--card);box-shadow:none;border-color:var(--border)}
+[data-theme="dark"] .compare-col{background:var(--card);border-color:var(--border)}
+[data-theme="dark"] select{color:var(--text);background-color:var(--card)}
+[data-theme="dark"] select option{background:var(--card);color:var(--text)}
+[data-theme="dark"] .mode-bar button{color:var(--sub)}
+[data-theme="dark"] .mode-bar button.on{color:var(--c)}
+[data-theme="dark"] .num-hint{color:#666}
+[data-theme="dark"] .ai-progress{background:rgba(255,255,255,.05)}
+[data-theme="dark"] .closing-card{background:var(--card)}
+/* ═══ IMPROVED PRINT LAYOUT ═══ */
+@media print{
+  .chart-container,.dashboard-grid{break-inside:avoid}
+  .scenario-card{break-inside:avoid;border:1px solid #ddd!important}
+  canvas{max-height:200px!important}
+}
+/* ═══ SECTION TRANSITIONS ═══ */
+#tabContent>div{animation:slideIn .3s cubic-bezier(.4,0,.2,1) both}
+.glass{transition:box-shadow .3s ease,border-color .3s ease,transform .2s ease}
 </style>
 </head>
 <body>
@@ -262,6 +312,38 @@ const MW=10030,DAYS=["월","화","수","목","금","토","일"],MO=[1,2,3,4,5,6,
 let uid=()=>Math.random().toString(36).slice(2,9);
 let fW=n=>Math.round(n).toLocaleString()+"원";
 let fM=n=>Math.round(n).toLocaleString()+"만원";
+
+// ═══ XSS SANITIZATION ═══
+function sanitize(str){if(!str||typeof str!=='string')return '';return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
+function sanitizeNum(val){let n=parseFloat(val);return isNaN(n)?0:n;}
+function sanitizeInput(el){if(el&&el.value)el.value=el.value.replace(/<[^>]*>/g,'');}
+
+// ═══ CHART MANAGEMENT ═══
+let _chartInstances={};
+function destroyChart(id){if(_chartInstances[id]){_chartInstances[id].destroy();delete _chartInstances[id];}}
+function createChart(canvasId,config){destroyChart(canvasId);let canvas=document.getElementById(canvasId);if(!canvas)return null;let ctx=canvas.getContext('2d');_chartInstances[canvasId]=new Chart(ctx,config);return _chartInstances[canvasId];}
+
+// ═══ MULTI-SCENARIO ANALYSIS ═══
+function getScenarioCalcs(scenario){
+  let multiplier=scenario==='best'?1.3:scenario==='worst'?0.7:1;
+  let bR=S.revTarget.basis==='t1'?S.revTarget.t1:S.revTarget.basis==='t3'?S.revTarget.t3:S.revTarget.t2;
+  let revAvg=bR*10000*multiplier;
+  let staffC=S.staff.map(s=>({...s,c:calcCost(s)}));
+  let totalLabor=staffC.reduce((a,b)=>a+b.c.eTotal,0);
+  let laborRatio=revAvg>0?totalLabor/revAvg*100:0;
+  let costTotal=S.costItems.reduce((a,ci)=>a+(ci.mode==='percent'?revAvg*ci.value/100:ci.value),0)+totalLabor;
+  let profit=revAvg-costTotal;
+  let roiInvest=S.roiItems.filter(r=>!r.excluded).reduce((a,b)=>a+b.value,0);
+  let rentItem=S.costItems.find(ci=>ci.name.includes('임대'));
+  let mRent=rentItem?(rentItem.mode==='percent'?revAvg*rentItem.value/100:rentItem.value):0;
+  let rentSave=S.rentFree.enabled?(mRent-(S.rentFree.adminFee||0))*(S.rentFree.months||0):0;
+  let effInvest=roiInvest*10000-rentSave;
+  let roiMonths=profit>0?Math.ceil(Math.max(effInvest,0)/profit):999;
+  let profitRate=revAvg>0?(profit/revAvg*100):0;
+  let yearProfit=profit*12;
+  let roiPercent=effInvest>0?(yearProfit/effInvest*100):0;
+  return{revAvg,totalLabor,laborRatio,costTotal,profit,roiInvest,roiMonths,profitRate,yearProfit,roiPercent,effInvest,rentSave};
+}
 
 const EMP_INS=[{n:"국민연금",r:.045},{n:"건강보험",r:.03545},{n:"장기요양",r:.004591},{n:"고용보험",r:.009},{n:"산재보험",r:.007}];
 
@@ -525,8 +607,6 @@ async function analyzeWithGemini(file, category, cb) {
     });
     let geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=';
     let keysToTry = [S.geminiKey];
-    let backupKey = localStorage.getItem('_psk_g2') || '';
-    if (backupKey && backupKey !== S.geminiKey) keysToTry.push(backupKey);
 
     let lastErr = '';
     for (let ki = 0; ki < keysToTry.length; ki++) {
@@ -539,15 +619,14 @@ async function analyzeWithGemini(file, category, cb) {
         let data = await res.json();
         if (data.error) {
           lastErr = data.error.message || 'API 요청 실패';
-          if (ki < keysToTry.length - 1) { console.log('[Gemini] 기본 키 실패, 백업 키로 재시도...'); continue; }
-          cb('[Gemini 오류] ' + lastErr + '\n\nAPI Key를 확인해주세요.');
+          if (ki < keysToTry.length - 1) { continue; }
+          cb('[Gemini Error] ' + lastErr + '\n\nPlease check your API Key.');
           return;
         }
         let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
         if (text.trim()) {
-          // 마크다운 잔재 정리
+          // Clean markdown residue
           text = text.replace(/\*\*/g, '').replace(/^[•·\-]\s*/gm, '').replace(/^#+\s*/gm, '');
-          if (ki > 0) console.log('[Gemini] 백업 키로 성공');
           cb(text.trim());
         } else {
           cb('[분석 결과 없음] 파일 내용이 비어있거나 읽을 수 없습니다.');
@@ -555,7 +634,7 @@ async function analyzeWithGemini(file, category, cb) {
         return;
       } catch (err) {
         lastErr = err.message;
-        if (ki < keysToTry.length - 1) { console.log('[Gemini] 기본 키 연결 실패, 백업 키로 재시도...'); continue; }
+        if (ki < keysToTry.length - 1) { continue; }
         cb('[연결 실패] ' + lastErr + '\n\n인터넷 연결을 확인해주세요.');
       }
     }
@@ -1238,10 +1317,10 @@ function upd(){render();autoSave();saveKeys();}
 
 /* ═══════════════ TABS ═══════════════ */
 const TABS=[
-  {id:"basic",icon:"ri-settings-3-line",label:"기본"},{id:"client",icon:"ri-contacts-book-line",label:"고객관리"},{id:"templates",icon:"ri-file-copy-2-line",label:"템플릿"},
+  {id:"basic",icon:"ri-settings-3-line",label:"기본"},{id:"dashboard",icon:"ri-dashboard-line",label:"대시보드"},{id:"client",icon:"ri-contacts-book-line",label:"고객관리"},{id:"templates",icon:"ri-file-copy-2-line",label:"템플릿"},
   {id:"menu",icon:"ri-restaurant-line",label:"메뉴"},{id:"area",icon:"ri-map-pin-line",label:"상권"},
   {id:"story",icon:"ri-fire-line",label:"브랜드"},{id:"space",icon:"ri-layout-grid-line",label:"공간/매출"},{id:"setup",icon:"ri-money-dollar-circle-line",label:"개설비용"},{id:"revenue",icon:"ri-bar-chart-line",label:"매출"},
-  {id:"cost",icon:"ri-file-list-3-line",label:"수익분석"},{id:"labor",icon:"ri-team-line",label:"인건비"},{id:"roi",icon:"ri-funds-line",label:"ROI"},
+  {id:"cost",icon:"ri-file-list-3-line",label:"수익분석"},{id:"labor",icon:"ri-team-line",label:"인건비"},{id:"roi",icon:"ri-funds-line",label:"ROI"},{id:"scenario",icon:"ri-git-branch-line",label:"시나리오"},
   {id:"media",icon:"ri-image-line",label:"파일"},
   {id:"comp",icon:"ri-scales-3-line",label:"경쟁"},{id:"support",icon:"ri-building-line",label:"본사지원"},{id:"closing",icon:"ri-focus-3-line",label:"클로징"},
   {id:"sign",icon:"ri-quill-pen-line",label:"서명"},{id:"compare",icon:"ri-bar-chart-grouped-line",label:"비교"}
@@ -1323,6 +1402,7 @@ function renderEdit(){
   let T=S.tab;
 
   if(T==="basic") el.appendChild(renderBasic());
+  else if(T==="dashboard") el.appendChild(renderDashboard());
   else if(T==="client") el.appendChild(renderClientMgmt());
   else if(T==="templates") el.appendChild(renderTemplates());
   else if(T==="menu") el.appendChild(renderMenu());
@@ -1334,6 +1414,7 @@ function renderEdit(){
   else if(T==="cost") el.appendChild(renderCostTab());
   else if(T==="labor") el.appendChild(renderLabor());
   else if(T==="roi") el.appendChild(renderROI());
+  else if(T==="scenario") el.appendChild(renderScenario());
   else if(T==="media") el.appendChild(renderMediaHub());
   else if(T==="comp") el.appendChild(renderComp());
   else if(T==="support") el.appendChild(renderSupport());
@@ -2301,6 +2382,26 @@ function renderROI(){
     rf.append(lbl('렌트프리 기간 (개월)'),h('input',{type:'number',value:S.rentFree.months,style:{textAlign:'right',fontWeight:'800'},onChange:e=>{S.rentFree.months=+e.target.value;upd();}}),lbl('관리비 (렌트프리 기간 중 월, 원)'),h('input',{type:'number',value:S.rentFree.adminFee,style:{textAlign:'right',fontWeight:'800'},onChange:e=>{S.rentFree.adminFee=+e.target.value;upd();}}),h('div',{className:'num-hint'},'임대료 면제, 관리비만 부담'),lbl('공사기간 면제 (개월, 추가)'),h('input',{type:'number',value:S.rentFree.constructionMonths,style:{textAlign:'right',fontWeight:'800'},onChange:e=>{S.rentFree.constructionMonths=+e.target.value;upd();}}),h('div',{style:{padding:'14px',background:'linear-gradient(135deg,#ECFDF5,#D1FAE5)',borderRadius:'14px',fontSize:'12px',marginTop:'10px'}},h('div',{style:{fontWeight:'800',color:'#059669',fontSize:'14px'}},'절감: '+fW(rentSave)),h('div',{style:{fontSize:'10px',color:'#6B7280',marginTop:'4px'}},'실질 투자금: '+fW(effInvest)+' → 회수 '+roiMonths+'개월')));
   }
   w.appendChild(rf);
+
+  // ROI Timeline Chart
+  let roiChartCard=h('div',{className:'glass'});
+  roiChartCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-line-chart-line',style:{color:c}}),'Investment Recovery Chart'));
+  let roiChartCanvas=document.createElement('canvas');roiChartCanvas.id='roiTimelineChart';roiChartCanvas.style.maxHeight='250px';
+  let roiChartWrap=h('div',{className:'chart-container'});roiChartWrap.appendChild(roiChartCanvas);roiChartCard.appendChild(roiChartWrap);
+  w.appendChild(roiChartCard);
+
+  setTimeout(()=>{
+    try{
+      let isDark=S.darkMode;let fontColor=isDark?'#ccc':'#666';let gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)';
+      let maxM=Math.min(roiMonths*2,48);if(maxM<12)maxM=12;
+      let months=Array.from({length:maxM+1},(_,i)=>i);
+      createChart('roiTimelineChart',{type:'line',data:{labels:months.map(m=>m+'M'),datasets:[
+        {label:'Total Investment',data:months.map(()=>effInvest),borderColor:'#E53935',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false},
+        {label:'Cumulative Profit',data:months.map(m=>profit*m),borderColor:'#43A047',backgroundColor:'rgba(67,160,71,.1)',fill:true,tension:.1,borderWidth:2.5,pointRadius:0}
+      ]},options:{responsive:true,maintainAspectRatio:true,interaction:{intersect:false,mode:'index'},plugins:{legend:{labels:{color:fontColor,font:{size:10,weight:'600'}}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fW(Math.round(ctx.raw))}}},scales:{x:{ticks:{color:fontColor,maxTicksLimit:12},grid:{color:gridColor}},y:{ticks:{color:fontColor,callback:v=>Math.round(v/10000)+'m'},grid:{color:gridColor}}}}});
+    }catch(e){console.log('ROI chart error:',e);}
+  },50);
+
   return w;
 }
 
@@ -2388,8 +2489,11 @@ function renderMediaHub(){
         pendingFiles.forEach((pf,pi)=>{
           let chip=document.createElement('div');
           chip.style.cssText='display:flex;align-items:center;gap:4px;padding:4px 8px;background:#fff;border:1px solid #ddd;border-radius:8px;font-size:10px;font-weight:600';
-          chip.innerHTML=(pf.type==='image'?'<img src="'+pf.url+'" style="width:24px;height:24px;border-radius:4px;object-fit:cover">':'📄')+' '+pf.name.slice(0,15)+'<span style="cursor:pointer;color:#E53935;margin-left:4px" onclick="this.parentElement.remove()">✕</span>';
-          chip.querySelector('span').onclick=()=>{pendingFiles.splice(pi,1);if(pendingFiles.length===0)previewArea.style.display='none';else{previewArea.removeChild(chip);}};
+          if(pf.type==='image'){let img=document.createElement('img');img.src=pf.url;img.style.cssText='width:24px;height:24px;border-radius:4px;object-fit:cover';chip.appendChild(img);}else{chip.appendChild(document.createTextNode('📄'));}
+          chip.appendChild(document.createTextNode(' '+sanitize(pf.name).slice(0,15)));
+          let delSpan=document.createElement('span');delSpan.style.cssText='cursor:pointer;color:#E53935;margin-left:4px';delSpan.textContent='✕';
+          delSpan.onclick=()=>{pendingFiles.splice(pi,1);if(pendingFiles.length===0)previewArea.style.display='none';else{previewArea.removeChild(chip);}};
+          chip.appendChild(delSpan);
           previewArea.appendChild(chip);
         });
       };
@@ -3106,6 +3210,253 @@ function renderCompare(){
   return w;
 }
 
+/* ═══════════════ FINANCIAL DASHBOARD ═══════════════ */
+function renderDashboard(){
+  let w=h('div',{className:'flex-col'}),c=S.brandColor;
+  let calcs=getCalcs();
+  let base=getScenarioCalcs('base'),best=getScenarioCalcs('best'),worst=getScenarioCalcs('worst');
+
+  // Header
+  let hdr=h('div',{className:'glass',style:{borderLeft:'4px solid '+c,padding:'16px',background:'linear-gradient(135deg,'+c+'05,'+c+'12)'}});
+  hdr.appendChild(h('div',{style:{fontSize:'17px',fontWeight:'900',color:c,marginBottom:'4px',display:'flex',alignItems:'center',gap:'8px'}},h('i',{className:'ri-dashboard-line'}),'Financial Dashboard'));
+  hdr.appendChild(h('div',{style:{fontSize:'11px',color:'#888'}},'All key metrics at a glance'));
+  w.appendChild(hdr);
+
+  // Key Metrics Grid
+  let grid=h('div',{className:'dashboard-grid'});
+  let metrics=[
+    {label:'Monthly Revenue',value:fW(base.revAvg),sub:'Base case',color:'#1565C0',bg:'#E3F2FD',icon:'ri-money-dollar-circle-line'},
+    {label:'Monthly Profit',value:fW(base.profit),sub:'After all costs',color:base.profit>0?'#059669':'#DC2626',bg:base.profit>0?'#ECFDF5':'#FEF2F2',icon:'ri-line-chart-line'},
+    {label:'ROI Period',value:base.roiMonths+(base.roiMonths<999?' months':'N/A'),sub:'Investment recovery',color:c,bg:c+'12',icon:'ri-timer-line'},
+    {label:'Labor Ratio',value:base.laborRatio.toFixed(1)+'%',sub:S.staff.length+' staff',color:base.laborRatio>30?'#DC2626':'#059669',bg:base.laborRatio>30?'#FEF2F2':'#ECFDF5',icon:'ri-team-line'},
+    {label:'Profit Rate',value:base.profitRate.toFixed(1)+'%',sub:'Net margin',color:base.profitRate>15?'#059669':'#D97706',bg:base.profitRate>15?'#ECFDF5':'#FFF8E1',icon:'ri-percent-line'},
+    {label:'Annual ROI',value:base.roiPercent.toFixed(1)+'%',sub:'Yearly return on investment',color:base.roiPercent>50?'#059669':'#D97706',bg:base.roiPercent>50?'#ECFDF5':'#FFF8E1',icon:'ri-funds-line'}
+  ];
+  metrics.forEach(m=>{
+    let card=h('div',{className:'dash-metric',style:{background:m.bg}});
+    card.append(
+      h('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px',marginBottom:'4px'}},h('i',{className:m.icon,style:{fontSize:'14px',color:m.color}}),h('span',{className:'dash-label'},m.label)),
+      h('div',{className:'dash-value',style:{color:m.color}},m.value),
+      h('div',{className:'dash-sub'},m.sub)
+    );
+    grid.appendChild(card);
+  });
+  w.appendChild(grid);
+
+  // Revenue vs Expense Pie Chart
+  let pieCard=h('div',{className:'glass'});
+  pieCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-pie-chart-line',style:{color:c}}),'Revenue vs Expenses Breakdown'));
+  let pieCanvas=document.createElement('canvas');pieCanvas.id='dashPieChart';pieCanvas.style.maxHeight='260px';
+  let pieWrap=h('div',{className:'chart-container'});pieWrap.appendChild(pieCanvas);pieCard.appendChild(pieWrap);
+  w.appendChild(pieCard);
+
+  // ROI Timeline Chart
+  let roiCard=h('div',{className:'glass'});
+  roiCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-line-chart-line',style:{color:c}}),'Investment Recovery Timeline'));
+  let roiCanvas=document.createElement('canvas');roiCanvas.id='dashRoiChart';roiCanvas.style.maxHeight='260px';
+  let roiWrap=h('div',{className:'chart-container'});roiWrap.appendChild(roiCanvas);roiCard.appendChild(roiWrap);
+  w.appendChild(roiCard);
+
+  // Monthly Revenue Projection Chart
+  let projCard=h('div',{className:'glass'});
+  projCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-bar-chart-grouped-line',style:{color:c}}),'Monthly Revenue Projection'));
+  let projCanvas=document.createElement('canvas');projCanvas.id='dashProjChart';projCanvas.style.maxHeight='260px';
+  let projWrap=h('div',{className:'chart-container'});projWrap.appendChild(projCanvas);projCard.appendChild(projWrap);
+  w.appendChild(projCard);
+
+  // Competitor Radar Chart
+  if(S.competitors.length>=2){
+    let radarCard=h('div',{className:'glass'});
+    radarCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-radar-line',style:{color:c}}),'Competitor Comparison'));
+    let radarCanvas=document.createElement('canvas');radarCanvas.id='dashRadarChart';radarCanvas.style.maxHeight='280px';
+    let radarWrap=h('div',{className:'chart-container'});radarWrap.appendChild(radarCanvas);radarCard.appendChild(radarWrap);
+    w.appendChild(radarCard);
+  }
+
+  // Scenario Comparison Bar Chart
+  let scenCard=h('div',{className:'glass'});
+  scenCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-git-branch-line',style:{color:c}}),'Scenario Comparison'));
+  let scenCanvas=document.createElement('canvas');scenCanvas.id='dashScenChart';scenCanvas.style.maxHeight='260px';
+  let scenWrap=h('div',{className:'chart-container'});scenWrap.appendChild(scenCanvas);scenCard.appendChild(scenWrap);
+  w.appendChild(scenCard);
+
+  // Render charts after DOM insertion
+  setTimeout(()=>{renderDashboardCharts(base,best,worst,calcs);},50);
+  return w;
+}
+
+function renderDashboardCharts(base,best,worst,calcs){
+  let c=S.brandColor;
+  let isDark=S.darkMode;
+  let fontColor=isDark?'#ccc':'#666';
+  let gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)';
+  let defaultOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:fontColor,font:{size:11,weight:'600'}}}}};
+
+  // 1. Pie Chart - Revenue vs Expenses
+  try{
+    let costBreakdown=S.costItems.map(ci=>{
+      let amt=ci.mode==='percent'?base.revAvg*ci.value/100:ci.value;
+      return{name:ci.name,value:amt};
+    });
+    costBreakdown.push({name:'Profit',value:Math.max(base.profit,0)});
+    costBreakdown.push({name:'Labor',value:base.totalLabor});
+    let colors=['#E53935','#FF9800','#FFB300','#66BB6A','#42A5F5','#AB47BC','#26A69A','#EC407A'];
+    createChart('dashPieChart',{type:'doughnut',data:{labels:costBreakdown.map(c=>c.name),datasets:[{data:costBreakdown.map(c=>Math.round(c.value)),backgroundColor:colors.slice(0,costBreakdown.length),borderWidth:2,borderColor:isDark?'#16213e':'#fff'}]},options:{...defaultOpts,cutout:'45%',plugins:{...defaultOpts.plugins,tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+fW(ctx.raw)+' ('+((ctx.raw/base.revAvg)*100).toFixed(1)+'%)';}}}}}});
+  }catch(e){console.log('Pie chart error:',e);}
+
+  // 2. ROI Timeline Chart
+  try{
+    let months=Math.min(base.roiMonths*1.5,60);
+    let labels=[],invested=[],cumProfit=[];
+    let totalInvest=base.effInvest;
+    for(let m=0;m<=months;m++){
+      labels.push(m+'M');
+      invested.push(totalInvest);
+      cumProfit.push(base.profit*m);
+    }
+    createChart('dashRoiChart',{type:'line',data:{labels:labels,datasets:[
+      {label:'Investment',data:invested,borderColor:'#E53935',backgroundColor:'rgba(229,57,53,.1)',fill:true,tension:0,borderWidth:2,pointRadius:0},
+      {label:'Cumulative Profit',data:cumProfit,borderColor:'#43A047',backgroundColor:'rgba(67,160,71,.1)',fill:true,tension:.1,borderWidth:2,pointRadius:0},
+      {label:'Best Case',data:labels.map((_,i)=>best.profit*i),borderColor:'#4CAF50',borderDash:[5,5],borderWidth:1.5,pointRadius:0,fill:false},
+      {label:'Worst Case',data:labels.map((_,i)=>worst.profit*i),borderColor:'#FF9800',borderDash:[5,5],borderWidth:1.5,pointRadius:0,fill:false}
+    ]},options:{...defaultOpts,scales:{x:{ticks:{color:fontColor,maxTicksLimit:12},grid:{color:gridColor}},y:{ticks:{color:fontColor,callback:v=>Math.round(v/10000)+'m'},grid:{color:gridColor}}},plugins:{...defaultOpts.plugins,annotation:undefined}}});
+  }catch(e){console.log('ROI chart error:',e);}
+
+  // 3. Monthly Revenue Projection
+  try{
+    let revData=S.revSets.length>0?S.revSets[0].data:[0,0,0,0,0,0,0,0,0,0,0,0];
+    let basisRev=(S.revTarget.basis==='t1'?S.revTarget.t1:S.revTarget.basis==='t3'?S.revTarget.t3:S.revTarget.t2)*10000;
+    createChart('dashProjChart',{type:'bar',data:{labels:MO.map(m=>m+'M'),datasets:[
+      {label:'Actual Revenue',data:revData.map(v=>v*10000),backgroundColor:c+'88',borderColor:c,borderWidth:1,borderRadius:4},
+      {label:'Target',data:Array(12).fill(basisRev),type:'line',borderColor:'#E53935',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false}
+    ]},options:{...defaultOpts,scales:{x:{ticks:{color:fontColor},grid:{display:false}},y:{ticks:{color:fontColor,callback:v=>Math.round(v/10000)+'m'},grid:{color:gridColor}}}}});
+  }catch(e){console.log('Projection chart error:',e);}
+
+  // 4. Competitor Radar Chart
+  try{
+    if(S.competitors.length>=2){
+      let parseVal=s=>{let n=parseFloat(String(s).replace(/[^0-9.]/g,''));return isNaN(n)?0:n;};
+      let maxF=Math.max(...S.competitors.map(c=>parseVal(c.franchise)),1);
+      let maxR=Math.max(...S.competitors.map(c=>parseVal(c.royalty)),1);
+      let maxI=Math.max(...S.competitors.map(c=>parseVal(c.interior)),1);
+      let datasets=S.competitors.slice(0,4).map((comp,i)=>{
+        let colors=['rgba(139,69,19,.3)','rgba(59,130,246,.3)','rgba(16,185,129,.3)','rgba(239,68,68,.3)'];
+        let borders=[c,'#3B82F6','#10B981','#EF4444'];
+        let fScore=maxF>0?100-parseVal(comp.franchise)/maxF*100:50;
+        let rScore=maxR>0?100-parseVal(comp.royalty)/maxR*100:50;
+        let iScore=maxI>0?100-parseVal(comp.interior)/maxI*100:50;
+        let noteScore=comp.note?comp.note.length*3:30;
+        return{label:comp.name,data:[fScore,rScore,iScore,Math.min(noteScore,100),comp.id==='self'?90:60],backgroundColor:colors[i]||colors[0],borderColor:borders[i]||borders[0],borderWidth:2,pointRadius:3};
+      });
+      createChart('dashRadarChart',{type:'radar',data:{labels:['Low Franchise','Low Royalty','Low Interior','Features','Brand Power'],datasets:datasets},options:{...defaultOpts,scales:{r:{angleLines:{color:gridColor},grid:{color:gridColor},pointLabels:{color:fontColor,font:{size:10}},ticks:{display:false},min:0,max:100}}}});
+    }
+  }catch(e){console.log('Radar chart error:',e);}
+
+  // 5. Scenario Comparison
+  try{
+    createChart('dashScenChart',{type:'bar',data:{labels:['Revenue','Expenses','Profit','ROI (months)'],datasets:[
+      {label:'Worst (-30%)',data:[worst.revAvg,worst.costTotal,worst.profit,worst.roiMonths>60?60:worst.roiMonths],backgroundColor:'#FFCDD2',borderColor:'#E53935',borderWidth:1,borderRadius:3},
+      {label:'Base',data:[base.revAvg,base.costTotal,base.profit,base.roiMonths>60?60:base.roiMonths],backgroundColor:c+'44',borderColor:c,borderWidth:1,borderRadius:3},
+      {label:'Best (+30%)',data:[best.revAvg,best.costTotal,best.profit,best.roiMonths>60?60:best.roiMonths],backgroundColor:'#C8E6C9',borderColor:'#43A047',borderWidth:1,borderRadius:3}
+    ]},options:{...defaultOpts,scales:{x:{ticks:{color:fontColor},grid:{display:false}},y:{ticks:{color:fontColor,callback:v=>v>1000?Math.round(v/10000)+'m':v},grid:{color:gridColor}}}}});
+  }catch(e){console.log('Scenario chart error:',e);}
+}
+
+/* ═══════════════ SCENARIO ANALYSIS TAB ═══════════════ */
+function renderScenario(){
+  let w=h('div',{className:'flex-col'}),c=S.brandColor;
+  let base=getScenarioCalcs('base'),best=getScenarioCalcs('best'),worst=getScenarioCalcs('worst');
+
+  // Header
+  let hdr=h('div',{className:'glass',style:{borderLeft:'4px solid '+c,padding:'16px'}});
+  hdr.appendChild(h('div',{style:{fontSize:'15px',fontWeight:'900',color:c,marginBottom:'4px',display:'flex',alignItems:'center',gap:'8px'}},h('i',{className:'ri-git-branch-line'}),'Multi-Scenario Analysis'));
+  hdr.appendChild(h('div',{style:{fontSize:'11px',color:'#888',lineHeight:'1.5'}},'Compare Best Case (+30%), Base Case, and Worst Case (-30%) projections'));
+  w.appendChild(hdr);
+
+  // Scenario Cards
+  let scenarios=[
+    {id:'worst',name:'Worst Case',desc:'Revenue -30%',icon:'ri-arrow-down-line',color:'#E53935',bg:'#FEF2F2',data:worst},
+    {id:'base',name:'Base Case',desc:'Current projection',icon:'ri-subtract-line',color:c,bg:c+'10',data:base},
+    {id:'best',name:'Best Case',desc:'Revenue +30%',icon:'ri-arrow-up-line',color:'#43A047',bg:'#ECFDF5',data:best}
+  ];
+
+  scenarios.forEach(sc=>{
+    let card=h('div',{className:'glass',style:{borderLeft:'4px solid '+sc.color,padding:'16px',marginBottom:'10px'}});
+    let header=h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}});
+    header.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'8px'}},
+      h('i',{className:sc.icon,style:{fontSize:'18px',color:sc.color}}),
+      h('div',{},
+        h('div',{style:{fontSize:'14px',fontWeight:'900',color:sc.color}},sc.name),
+        h('div',{style:{fontSize:'10px',color:'#888'}},sc.desc)
+      )
+    ));
+    header.appendChild(h('div',{style:{textAlign:'right'}},
+      h('div',{style:{fontSize:'20px',fontWeight:'900',color:sc.color}},fW(sc.data.profit)),
+      h('div',{style:{fontSize:'9px',color:'#888'}},'monthly profit')
+    ));
+    card.appendChild(header);
+
+    let vals=h('div',{className:'scenario-values'});
+    [
+      {l:'Monthly Revenue',v:fW(sc.data.revAvg)},{l:'Monthly Expenses',v:fW(sc.data.costTotal)},
+      {l:'Profit Rate',v:sc.data.profitRate.toFixed(1)+'%'},{l:'Labor Ratio',v:sc.data.laborRatio.toFixed(1)+'%'},
+      {l:'ROI Period',v:sc.data.roiMonths+(sc.data.roiMonths<999?' months':'N/A')},{l:'Annual ROI',v:sc.data.roiPercent.toFixed(1)+'%'},
+      {l:'Annual Profit',v:fW(sc.data.yearProfit)},{l:'Rent Savings',v:fW(sc.data.rentSave)}
+    ].forEach(vl=>{
+      vals.appendChild(h('div',{className:'scenario-val',style:{background:sc.bg}},
+        h('div',{className:'sv-label'},vl.l),
+        h('div',{className:'sv-num',style:{color:sc.color}},vl.v)
+      ));
+    });
+    card.appendChild(vals);
+    w.appendChild(card);
+  });
+
+  // Break-even Analysis
+  let beCard=h('div',{className:'glass'});
+  beCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'12px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-focus-3-line',style:{color:c}}),'Break-even Point'));
+  let basisRev=(S.revTarget.basis==='t1'?S.revTarget.t1:S.revTarget.basis==='t3'?S.revTarget.t3:S.revTarget.t2)*10000;
+  let fixedCosts=S.costItems.filter(ci=>ci.mode==='fixed').reduce((a,ci)=>a+ci.value,0)+base.totalLabor;
+  let varRate=S.costItems.filter(ci=>ci.mode==='percent').reduce((a,ci)=>a+ci.value,0)/100;
+  let breakEvenRev=varRate<1?Math.round(fixedCosts/(1-varRate)):0;
+  let breakEvenPct=basisRev>0?(breakEvenRev/basisRev*100).toFixed(1):'N/A';
+
+  let beGrid=h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px'}});
+  [{l:'Fixed Costs',v:fW(fixedCosts),cl:'#E53935'},{l:'Variable Rate',v:(varRate*100).toFixed(1)+'%',cl:'#FF9800'},{l:'Break-even Revenue',v:fW(breakEvenRev),cl:c}].forEach(d=>{
+    beGrid.appendChild(h('div',{style:{textAlign:'center',padding:'12px',background:'#f9f9f9',borderRadius:'10px'}},
+      h('div',{style:{fontSize:'10px',color:'#888',fontWeight:'600',marginBottom:'4px'}},d.l),
+      h('div',{style:{fontSize:'16px',fontWeight:'900',color:d.cl}},d.v)
+    ));
+  });
+  beCard.appendChild(beGrid);
+  beCard.appendChild(h('div',{style:{marginTop:'10px',padding:'10px',background:parseFloat(breakEvenPct)<100?'#ECFDF5':'#FEF2F2',borderRadius:'10px',textAlign:'center',fontSize:'12px',fontWeight:'700',color:parseFloat(breakEvenPct)<100?'#059669':'#DC2626'}},
+    'Break-even at '+breakEvenPct+'% of target revenue ('+fW(breakEvenRev)+')'
+  ));
+  w.appendChild(beCard);
+
+  // Scenario Comparison Chart
+  let chartCard=h('div',{className:'glass'});
+  chartCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-bar-chart-line',style:{color:c}}),'24-Month Cumulative Profit'));
+  let scenChartCanvas=document.createElement('canvas');scenChartCanvas.id='scenarioTimelineChart';scenChartCanvas.style.maxHeight='260px';
+  let scenWrap=h('div',{className:'chart-container'});scenWrap.appendChild(scenChartCanvas);chartCard.appendChild(scenWrap);
+  w.appendChild(chartCard);
+
+  setTimeout(()=>{
+    try{
+      let isDark=S.darkMode;let fontColor=isDark?'#ccc':'#666';let gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)';
+      let months=Array.from({length:25},(_,i)=>i);
+      createChart('scenarioTimelineChart',{type:'line',data:{labels:months.map(m=>m+'M'),datasets:[
+        {label:'Worst',data:months.map(m=>worst.profit*m),borderColor:'#E53935',backgroundColor:'rgba(229,57,53,.05)',fill:true,tension:.2,borderWidth:2,pointRadius:0},
+        {label:'Base',data:months.map(m=>base.profit*m),borderColor:c,backgroundColor:c+'15',fill:true,tension:.2,borderWidth:2.5,pointRadius:0},
+        {label:'Best',data:months.map(m=>best.profit*m),borderColor:'#43A047',backgroundColor:'rgba(67,160,71,.05)',fill:true,tension:.2,borderWidth:2,pointRadius:0},
+        {label:'Investment',data:months.map(()=>base.effInvest),borderColor:'#888',borderDash:[8,4],borderWidth:1.5,pointRadius:0,fill:false}
+      ]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:fontColor,font:{size:10,weight:'600'}}}},scales:{x:{ticks:{color:fontColor,maxTicksLimit:13},grid:{color:gridColor}},y:{ticks:{color:fontColor,callback:v=>Math.round(v/10000)+'m'},grid:{color:gridColor}}}}});
+    }catch(e){console.log('Scenario timeline error:',e);}
+  },50);
+
+  return w;
+}
+
 function renderComp(){
   let w=h('div',{className:'flex-col'}),c=S.brandColor;
   S.competitors.forEach((comp,ci)=>{
@@ -3593,32 +3944,50 @@ function openLightbox(src){document.getElementById("lightboxImg").src=src;docume
 function closeLightbox(){document.getElementById("lightbox").classList.remove("show");document.removeEventListener('keydown',lightboxKeyHandler);}
 function lightboxKeyHandler(e){if(e.key==='Escape')closeLightbox();}
 function downloadPDF(){
-  // 미리보기 모드로 전환
+  // Switch to preview mode
   if(S.mode!=='preview'){S.mode='preview';render();}
-  showToast('PDF 준비 중...');
-  // ON/OFF 패널과 불필요 요소 숨기기
+  showToast('PDF preparing...');
+  // Hide UI controls
   let panel=document.querySelector('#previewView .pv-onoff');
   let ctrl=document.querySelector('#previewView>div:first-child');
   if(panel)panel.style.display='none';
   if(ctrl&&ctrl.querySelector('.pv-onoff'))ctrl.style.display='none';
-  // print style 삽입 (improved)
+
+  // Add branded header to each slide (for print)
+  let slides=document.querySelectorAll('.ppt-slide');
+  slides.forEach((sl,i)=>{
+    if(i===0)return; // Skip cover slide
+    let header=document.createElement('div');
+    header.className='pdf-branded-header';
+    header.style.cssText='display:none;position:absolute;top:0;left:0;right:0;padding:6px 16px;background:linear-gradient(90deg,'+S.brandColor+'08,transparent);border-bottom:1px solid '+S.brandColor+'15;z-index:10';
+    let hInner=document.createElement('div');
+    hInner.style.cssText='display:flex;justify-content:space-between;align-items:center;font-size:8px;color:#999';
+    hInner.innerHTML='<span style="font-weight:700;color:'+S.brandColor+'">'+sanitize(S.brand)+'</span><span>'+sanitize(S.subtitle||'Franchise Proposal')+'</span>';
+    header.appendChild(hInner);
+    sl.insertBefore(header,sl.firstChild);
+  });
+
+  // Enhanced print stylesheet
   let ps=document.createElement('style');
   ps.id='printStyle';
   ps.textContent=`
     @media print{
-      .mode-bar,.dark-toggle,.tabs,.pv-onoff,.toast,.skip-link{display:none!important}
+      .mode-bar,.dark-toggle,.tabs,.pv-onoff,.toast,.skip-link,.lightbox-overlay{display:none!important}
       #editView{display:none!important}
       #previewView{display:block!important;padding:0!important}
-      .wrap{max-width:100%!important;padding:0 15mm!important}
-      body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:11pt}
-      .ppt-slide{box-shadow:none!important;page-break-inside:avoid;page-break-after:always;margin:0;border-radius:0;border:none}
+      .wrap{max-width:100%!important;padding:0 12mm!important}
+      body{background:#fff!important;color:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:11pt}
+      [data-theme="dark"]{--bg:#fff!important;--card:#fff!important;--text:#111!important;--sub:#666!important}
+      .ppt-slide{box-shadow:none!important;page-break-inside:avoid;page-break-after:always;margin:0 0 2mm;border-radius:0;border:none;background:#fff!important;color:#111!important}
       .ppt-slide:last-child{page-break-after:auto}
+      .ppt-slide:first-child{page-break-before:avoid}
+      .pdf-branded-header{display:flex!important}
       div[style*="linear-gradient"]{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       a[href*="map.naver"]{display:none!important}
       .gallery-scroll{overflow:visible!important;flex-wrap:wrap!important}
       .gallery-scroll img{width:48%!important;height:auto!important;max-height:180px!important;scroll-snap-align:none!important;margin-bottom:6px}
       table{page-break-inside:avoid}
-      .lightbox-overlay{display:none!important}
+      canvas{max-height:200px!important}
       @page{margin:10mm 8mm;size:A4}
       @page:first{margin-top:0}
     }
@@ -3627,15 +3996,17 @@ function downloadPDF(){
 
   setTimeout(()=>{
     window.print();
-    // 복원
+    // Restore
     setTimeout(()=>{
       if(panel)panel.style.display='';
       if(ctrl)ctrl.style.display='';
       let pse=document.getElementById('printStyle');
       if(pse)pse.remove();
-      showToast('PDF 내보내기 완료');
+      // Remove branded headers
+      document.querySelectorAll('.pdf-branded-header').forEach(el=>el.remove());
+      showToast('PDF export complete');
     },500);
-  },300);
+  },400);
 }
 
 /* ═══════════════ SAVE / LOAD ═══════════════ */
@@ -3695,21 +4066,7 @@ function autoLoad(){
 
 
 /* ═══════════════ INIT ═══════════════ */
-// API 키 자동 주입 (최초 실행 시)
-(function(){
-  const defaults={
-    '_psk_g':['AIza','SyCs','7QZe','q1xk','b6VG','j0iw','tcYz','r7C_','jElv','NXg'].join(''),
-    '_psk_g2':['AIza','SyCs','7QZe','q1xk','b6VG','j0iw','tcYz','r7C_','jElv','NXg'].join(''),
-    '_psk_nid':'hiJJu_1UcVuZCL2hx2N0',
-    '_psk_ns':'q2jUORq9ch',
-    '_psk_pplx':['pplx-','DODV8cq9BuQG','i5slSkKkVQf9','fthREzsYH4cl','RYaBkeoOdKjw'].join(''),
-    '_psk_av':'8CEA89VHHEZIOWQY',
-    '_psk_c':['sk-ant-api03-pZS0ER_OL16UaThtXQk0x1','oBT_Hk8XsY8i6WBRbBYh3m1c6rYR6ruu5XwDXEjKSS','DeaGOOe-6xoXugIBKW-HcQ-b4zlwgAA'].join('')
-  };
-  for(const[k,v]of Object.entries(defaults)){
-    if(!localStorage.getItem(k)&&v)localStorage.setItem(k,v);
-  }
-})();
+// API keys are user-provided only - no hardcoded defaults for security
 autoLoad();loadKeys();loadDarkMode();render();
 
 // Keyboard shortcut: Ctrl+S to save

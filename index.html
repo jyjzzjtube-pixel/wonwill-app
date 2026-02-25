@@ -342,8 +342,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </div>
 
 <div class="mode-bar" role="toolbar" aria-label="View mode toolbar">
-  <button id="mEdit" class="on" onclick="setMode('edit')" role="tab" aria-selected="true" aria-label="Edit mode"><i class="ri-edit-2-line"></i> 편집</button>
-  <button id="mPrev" onclick="setMode('preview')" role="tab" aria-selected="false" aria-label="Preview mode"><i class="ri-eye-line"></i> 미리보기</button>
+  <button id="mEdit" class="on" onclick="setMode('edit')" role="tab" aria-selected="true" aria-label="편집 모드"><i class="ri-edit-2-line"></i> 편집</button>
+  <button id="mPrev" onclick="setMode('preview')" role="tab" aria-selected="false" aria-label="미리보기 모드"><i class="ri-eye-line"></i> 미리보기</button>
   <button id="mPrint" onclick="printProposal()" style="background:rgba(59,130,246,.08);color:#3B82F6;border:1.5px solid rgba(59,130,246,.2)" aria-label="Print"><i class="ri-printer-line"></i> 인쇄</button>
   <button id="mPdf" onclick="downloadPDF()" style="background:rgba(16,185,129,.08);color:#059669;border:1.5px solid rgba(16,185,129,.2)" aria-label="Download PDF"><i class="ri-download-2-line"></i> PDF</button>
   <button id="mAdmin" onclick="S.adminAuth?setTab('admin'):openAdminPin()" style="background:rgba(139,69,19,.08);color:var(--c);border:1.5px solid rgba(139,69,19,.2)" aria-label="Admin"><i class="ri-settings-4-line"></i></button>
@@ -435,9 +435,9 @@ let S={
   areaDetailText:'',
   spaceSim:{totalPy:30,kitchenPy:8,unitPrice:15000,turnover:2.5,occupancy:70},
   staffPlan:{cuisine:'korean',mode:'direct'},
-  geminiKey:'',
+  geminiKey:'AIzaSyCs7QZeq1xkb6VGj0iwtcYzr7C_jElvNXg',
   claudeKey:'',
-  gDriveClientId:'',
+  gDriveClientId:'298397708299-b1ueeug2sovkd5q62v2565af435pv4q1.apps.googleusercontent.com',
   gDriveApiKey:'',
   mediaHub:[],
   darkMode:false,
@@ -1168,23 +1168,36 @@ function loadGooglePicker(cb){
 }
 
 function openDrivePicker(category, dtInp){
-  if(!S.gDriveClientId||!S.gDriveApiKey){
-    alert('기본 탭 → AI 연동 설정에서\nGoogle Drive Client ID와 API Key를 입력해주세요.');
+  if(!S.gDriveClientId){
+    alert('기본 탭 → AI 연동 설정에서\nGoogle Drive Client ID를 입력해주세요.');
     return;
   }
   dtInp.value='📂 Google Drive 연결 중...';
   loadGooglePicker(()=>{
-    // OAuth 토큰 획득
-    let tokenClient=google.accounts.oauth2.initTokenClient({
-      client_id:S.gDriveClientId,
-      scope:'https://www.googleapis.com/auth/drive.readonly',
-      callback:(resp)=>{
-        if(resp.error){dtInp.value='[인증 실패] '+resp.error;return;}
-        gAuthToken=resp.access_token;
-        showPicker(category,dtInp);
-      }
-    });
-    tokenClient.requestAccessToken({prompt:gAuthToken?'':'consent'});
+    try{
+      // OAuth 토큰 획득 (GitHub Pages 지원)
+      let tokenClient=google.accounts.oauth2.initTokenClient({
+        client_id:S.gDriveClientId,
+        scope:'https://www.googleapis.com/auth/drive.readonly',
+        redirect_uri:window.location.origin,
+        callback:(resp)=>{
+          if(resp.error){
+            let errMsg='[인증 실패] ';
+            if(resp.error==='popup_blocked_by_browser') errMsg+='팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.';
+            else if(resp.error==='access_denied') errMsg+='접근이 거부되었습니다. Google 계정 권한을 확인해주세요.';
+            else if(resp.error==='invalid_client') errMsg+='Client ID가 올바르지 않습니다. 설정을 확인해주세요.';
+            else errMsg+=resp.error_description||resp.error;
+            dtInp.value=errMsg;
+            return;
+          }
+          gAuthToken=resp.access_token;
+          showPicker(category,dtInp);
+        }
+      });
+      tokenClient.requestAccessToken({prompt:gAuthToken?'':'consent'});
+    }catch(e){
+      dtInp.value='[Google Drive 오류] '+e.message+'\n\n현재 도메인('+window.location.origin+')이 OAuth 승인된 출처에 등록되어 있는지 확인해주세요.';
+    }
   });
 }
 
@@ -1508,9 +1521,9 @@ function renderBasic(){
   // H1 헤드라인 스타일
   let hero=h('div',{className:'glass',style:{textAlign:'center',padding:'28px 20px'}});
   hero.append(
-    h('div',{style:{fontSize:'11px',color:'#9CA3AF',fontWeight:'600',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'8px'}},'BRAND NAME'),
-    h('input',{value:S.brand,placeholder:'브랜드명 (필수)',style:{fontSize:'28px',fontWeight:'900',textAlign:'center',border:'none',background:'transparent',letterSpacing:'1px',color:c,padding:'4px'},'aria-label':'Brand name','aria-required':'true',onChange:e=>{S.brand=e.target.value;upd();},onInput:function(e){let v=e.target.value;e.target.classList.toggle('invalid',!v.trim());e.target.classList.toggle('valid',v.trim().length>=2);}}),
-    h('input',{value:S.storeName,placeholder:'지점명',style:{fontSize:'16px',fontWeight:'700',textAlign:'center',border:'none',background:'transparent',color:'#6B7280',padding:'2px',marginTop:'4px'},'aria-label':'Store name',onChange:e=>{S.storeName=e.target.value;upd();}})
+    h('div',{style:{fontSize:'11px',color:'#9CA3AF',fontWeight:'600',letterSpacing:'2px',marginBottom:'8px'}},'브랜드명'),
+    h('input',{value:S.brand,placeholder:'브랜드명 (필수)',style:{fontSize:'28px',fontWeight:'900',textAlign:'center',border:'none',background:'transparent',letterSpacing:'1px',color:c,padding:'4px'},'aria-label':'브랜드명','aria-required':'true',onChange:e=>{S.brand=e.target.value;upd();},onInput:function(e){let v=e.target.value;e.target.classList.toggle('invalid',!v.trim());e.target.classList.toggle('valid',v.trim().length>=2);}}),
+    h('input',{value:S.storeName,placeholder:'지점명',style:{fontSize:'16px',fontWeight:'700',textAlign:'center',border:'none',background:'transparent',color:'#6B7280',padding:'2px',marginTop:'4px'},'aria-label':'지점명',onChange:e=>{S.storeName=e.target.value;upd();}})
   );
   w.appendChild(hero);
   // 부제목 + 컬러
@@ -1590,7 +1603,7 @@ function renderBasic(){
   let badgeRow=h('div',{style:{display:'flex',gap:'4px'}});
   badgeRow.appendChild(h('span',{className:'conn-badge '+(S.geminiKey?'ok':'off')},'G '+(S.geminiKey?'ON':'OFF')));
   badgeRow.appendChild(h('span',{className:'conn-badge '+(S.claudeKey?'ok':'off')},'C '+(S.claudeKey?'ON':'OFF')));
-  badgeRow.appendChild(h('span',{className:'conn-badge '+((S.gDriveClientId&&S.gDriveApiKey)?'ok':'off')},'D '+((S.gDriveClientId&&S.gDriveApiKey)?'ON':'OFF')));
+  badgeRow.appendChild(h('span',{className:'conn-badge '+(S.gDriveClientId?'ok':'off')},'D '+(S.gDriveClientId?'ON':'OFF')));
   aiHdr.appendChild(badgeRow);
   aiCard.appendChild(aiHdr);
   aiCard.appendChild(h('div',{style:{fontSize:'10px',color:'#888',marginBottom:'12px',lineHeight:'1.5'}},'API Key를 입력하면 파일(PDF/DOCX/XLSX/PPTX)을 AI가 직접 읽고 제안서 멘트로 변환합니다.\nGemini + Claude 동시 연동 시 두 AI의 분석을 병합하여 최적 결과를 생성합니다.'));
@@ -1647,9 +1660,9 @@ function renderBasic(){
   // Google Drive
   let dSec=h('div',{style:{marginBottom:'12px',paddingTop:'10px',borderTop:'1px dashed #eee'}});
   let dHdr=h('div',{style:{fontSize:'11px',fontWeight:'800',color:'#0F9D58',marginBottom:'4px',display:'flex',alignItems:'center',gap:'4px'}});
-  dHdr.appendChild(h('span',{style:{width:'8px',height:'8px',borderRadius:'50%',background:(S.gDriveClientId&&S.gDriveApiKey)?'#4CAF50':'#ddd',display:'inline-block'}}));
+  dHdr.appendChild(h('span',{style:{width:'8px',height:'8px',borderRadius:'50%',background:S.gDriveClientId?'#4CAF50':'#ddd',display:'inline-block'}}));
   dHdr.appendChild(h('span',{},'Google Drive'));
-  if(S.gDriveClientId&&S.gDriveApiKey) dHdr.appendChild(h('span',{className:'conn-badge ok',style:{marginLeft:'auto'}},'연결됨'));
+  if(S.gDriveClientId) dHdr.appendChild(h('span',{className:'conn-badge ok',style:{marginLeft:'auto'}},'연결됨'));
   dSec.appendChild(dHdr);
   dSec.appendChild(h('div',{style:{fontSize:'9px',color:'#aaa',marginBottom:'6px',lineHeight:'1.4'}},'Cloud Console → OAuth Client ID + API Key 필요 → Drive에서 파일 가져오기'));
   let dRow1=h('div',{style:{display:'flex',gap:'5px',marginBottom:'4px'}});
@@ -1668,7 +1681,7 @@ function renderBasic(){
 
   // 상태 - Enhanced
   let hasAny=S.geminiKey||S.claudeKey;
-  let hasDrive=S.gDriveClientId&&S.gDriveApiKey;
+  let hasDrive=!!S.gDriveClientId;
   let hasBothAI=S.geminiKey&&S.claudeKey;
   let statusParts=[];
   if(S.geminiKey)statusParts.push('Gemini');
@@ -1755,7 +1768,7 @@ function renderArea(){
   aFInp.onchange=e=>{let f=e.target.files[0];if(!f)return;dtInp.value='⏳ 로컬 분석 중...';analyzeFileEnhanced(f,'상권분석',result=>{dtInp.value=result;S.areaDetailText=result;upd();});aFInp.value='';};
   aFInpG.onchange=e=>{let f=e.target.files[0];if(!f)return;dtInp.value='🤖 Gemini가 파일을 읽고 있습니다...';analyzeWithGemini(f,'상권분석',result=>{dtInp.value=result;S.areaDetailText=result;upd();});aFInpG.value='';};
   aFInpC.onchange=e=>{let f=e.target.files[0];if(!f)return;dtInp.value='🧠 Claude가 파일을 분석 중입니다...';analyzeWithClaude(f,'상권분석',result=>{dtInp.value=result;S.areaDetailText=result;upd();});aFInpC.value='';};
-  let hasG2=!!S.geminiKey,hasC2=!!S.claudeKey,hasBoth2=(hasG2&&hasC2),hasD2=!!(S.gDriveClientId&&S.gDriveApiKey);
+  let hasG2=!!S.geminiKey,hasC2=!!S.claudeKey,hasBoth2=(hasG2&&hasC2),hasD2=!!S.gDriveClientId;
 
   // AI Dual Merge Button (main action)
   if (hasG2 || hasC2) {
@@ -1809,7 +1822,7 @@ function renderStory(){
   fInpG.onchange=e=>{let f=e.target.files[0];if(!f)return;dtInp.value='🤖 Gemini가 파일을 읽고 있습니다...';analyzeWithGemini(f,'브랜드소개',result=>{dtInp.value=result;S.brandDetailText=result;upd();});fInpG.value='';};
   fInpC.onchange=e=>{let f=e.target.files[0];if(!f)return;dtInp.value='🧠 Claude가 파일을 분석 중입니다...';analyzeWithClaude(f,'브랜드소개',result=>{dtInp.value=result;S.brandDetailText=result;upd();});fInpC.value='';};
   // 버튼 2줄
-  let hasG=!!S.geminiKey,hasC=!!S.claudeKey,hasBoth=(hasG&&hasC),hasD=!!(S.gDriveClientId&&S.gDriveApiKey);
+  let hasG=!!S.geminiKey,hasC=!!S.claudeKey,hasBoth=(hasG&&hasC),hasD=!!S.gDriveClientId;
 
   // AI Dual Merge Button (main action)
   if (hasG || hasC) {
@@ -2465,7 +2478,7 @@ function renderROI(){
 
   // ROI Timeline Chart
   let roiChartCard=h('div',{className:'glass'});
-  roiChartCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-line-chart-line',style:{color:c}}),'Investment Recovery Chart'));
+  roiChartCard.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'900',marginBottom:'10px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-line-chart-line',style:{color:c}}),'투자금 회수 차트'));
   let roiChartCanvas=document.createElement('canvas');roiChartCanvas.id='roiTimelineChart';roiChartCanvas.style.maxHeight='250px';
   let roiChartWrap=h('div',{className:'chart-container'});roiChartWrap.appendChild(roiChartCanvas);roiChartCard.appendChild(roiChartWrap);
   w.appendChild(roiChartCard);
@@ -2476,8 +2489,8 @@ function renderROI(){
       let maxM=Math.min(roiMonths*2,48);if(maxM<12)maxM=12;
       let months=Array.from({length:maxM+1},(_,i)=>i);
       createChart('roiTimelineChart',{type:'line',data:{labels:months.map(m=>m+'M'),datasets:[
-        {label:'Total Investment',data:months.map(()=>effInvest),borderColor:'#E53935',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false},
-        {label:'Cumulative Profit',data:months.map(m=>profit*m),borderColor:'#43A047',backgroundColor:'rgba(67,160,71,.1)',fill:true,tension:.1,borderWidth:2.5,pointRadius:0}
+        {label:'총 투자금',data:months.map(()=>effInvest),borderColor:'#E53935',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false},
+        {label:'누적 수익',data:months.map(m=>profit*m),borderColor:'#43A047',backgroundColor:'rgba(67,160,71,.1)',fill:true,tension:.1,borderWidth:2.5,pointRadius:0}
       ]},options:{responsive:true,maintainAspectRatio:true,interaction:{intersect:false,mode:'index'},plugins:{legend:{labels:{color:fontColor,font:{size:10,weight:'600'}}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fW(Math.round(ctx.raw))}}},scales:{x:{ticks:{color:fontColor,maxTicksLimit:12},grid:{color:gridColor}},y:{ticks:{color:fontColor,callback:v=>Math.round(v/10000)+'m'},grid:{color:gridColor}}}}});
     }catch(e){console.log('ROI chart error:',e);}
   },50);
@@ -2614,7 +2627,7 @@ function renderMediaHub(){
       let resp='✅ '+pf.name+' → '+catInfo.icon+' '+catInfo.label+'로 분류했습니다.';
       if(catInfo.slide) resp+=' '+catInfo.slide+' 슬라이드에 배치됩니다.';
       // Drive 자동 업로드 시도
-      if(S.gDriveClientId&&S.gDriveApiKey) resp+='\n☁️ Drive 업로드 예약됨';
+      if(S.gDriveClientId) resp+='\n☁️ Drive 업로드 예약됨';
       S.mediaChatLog.push({role:'ai',text:resp});
     });
 
@@ -2707,7 +2720,7 @@ function renderMediaHub(){
 
     // 하단 버튼들
     let btnRow=h('div',{style:{display:'flex',gap:'6px',marginTop:'8px'}});
-    let hasDrv=S.gDriveClientId&&S.gDriveApiKey;
+    let hasDrv=!!S.gDriveClientId;
     btnRow.appendChild(h('button',{style:{flex:'1',padding:'11px',borderRadius:'10px',border:hasDrv?'2px solid #0F9D58':'1.5px dashed #ddd',background:hasDrv?'#E6F4EA':'#fafafa',fontSize:'11px',fontWeight:'800',cursor:'pointer',color:hasDrv?'#0F9D58':'#bbb'},onClick:()=>{
       if(!hasDrv){alert('기본 탭 → AI 연동 설정에서 Google Drive 연동');return;}
       uploadAllToDrive();
@@ -2884,11 +2897,11 @@ function renderClientMgmt(){
   let form=h('div',{className:'glass'});
   form.appendChild(h('div',{style:{fontSize:'13px',fontWeight:'800',marginBottom:'12px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-user-add-line',style:{color:c}}),'새 고객 등록'));
 
-  let nameInp=h('input',{id:'clientName',placeholder:'고객명 (필수)',style:{marginBottom:'6px'},'aria-label':'Customer name','aria-required':'true'});
-  let companyInp=h('input',{id:'clientCompany',placeholder:'회사/상호명',style:{marginBottom:'6px'},'aria-label':'Company name'});
-  let phoneInp=h('input',{id:'clientPhone',placeholder:'연락처 (010-0000-0000)',type:'tel',style:{marginBottom:'6px'},'aria-label':'Phone number'});
-  let emailInp=h('input',{id:'clientEmail',placeholder:'이메일',type:'email',style:{marginBottom:'6px'},'aria-label':'Email address'});
-  let noteInp=h('textarea',{id:'clientNote',placeholder:'메모 (예: 부천 스타필드 관심, 예산 2억)',style:{marginBottom:'8px',minHeight:'50px'},'aria-label':'Notes'});
+  let nameInp=h('input',{id:'clientName',placeholder:'고객명 (필수)',style:{marginBottom:'6px'},'aria-label':'고객명','aria-required':'true'});
+  let companyInp=h('input',{id:'clientCompany',placeholder:'회사/상호명',style:{marginBottom:'6px'},'aria-label':'회사명'});
+  let phoneInp=h('input',{id:'clientPhone',placeholder:'연락처 (010-0000-0000)',type:'tel',style:{marginBottom:'6px'},'aria-label':'연락처'});
+  let emailInp=h('input',{id:'clientEmail',placeholder:'이메일',type:'email',style:{marginBottom:'6px'},'aria-label':'이메일'});
+  let noteInp=h('textarea',{id:'clientNote',placeholder:'메모 (예: 부천 스타필드 관심, 예산 2억)',style:{marginBottom:'8px',minHeight:'50px'},'aria-label':'메모'});
 
   // Real-time validation
   nameInp.oninput=function(){
@@ -3579,19 +3592,55 @@ function renderSign(){
   // 배경 서명 아이콘
   w.appendChild(h('i',{className:'ri-quill-pen-line',style:{position:'absolute',right:'-10px',bottom:'-10px',fontSize:'120px',color:'rgba(0,0,0,.02)',transform:'rotate(-15deg)',pointerEvents:'none'}}));
   w.appendChild(h('div',{style:{fontSize:'14px',fontWeight:'800',marginBottom:'16px',display:'flex',alignItems:'center',gap:'8px'}},h('i',{className:'ri-quill-pen-line',style:{color:S.brandColor}}),'서명란'));
+
+  // 고객 선택 드롭다운
+  let clients=getClients();
+  if(clients.length>0){
+    let clientCard=h('div',{style:{padding:'12px',background:'#F0F7FF',borderRadius:'12px',border:'1px solid #BBDEFB',marginBottom:'14px'}});
+    clientCard.appendChild(h('div',{style:{fontSize:'12px',fontWeight:'800',color:'#1565C0',marginBottom:'8px',display:'flex',alignItems:'center',gap:'6px'}},h('i',{className:'ri-contacts-book-line'}),'고객 정보 연동'));
+    let clientSel=document.createElement('select');
+    clientSel.style.cssText='width:100%;padding:10px;border:1.5px solid #90CAF9;border-radius:10px;font-size:12px;font-weight:700;background:#fff;color:#333';
+    let defOpt=document.createElement('option');defOpt.value='';defOpt.textContent='-- 고객을 선택하세요 --';clientSel.appendChild(defOpt);
+    clients.forEach(cl=>{
+      let opt=document.createElement('option');opt.value=cl.id;
+      opt.textContent=cl.name+(cl.phone?' '+cl.phone:'')+(cl.company?' ('+cl.company+')':'');
+      if(S.selectedClient===cl.id)opt.selected=true;
+      clientSel.appendChild(opt);
+    });
+    clientSel.onchange=e=>{
+      let id=e.target.value;
+      if(id){
+        let cl=clients.find(x=>x.id===id);
+        S.selectedClient=id;
+        if(cl){S.signName=cl.name;S.signPhone=cl.phone||'';}
+        showToast(cl.name+' 고객 정보가 적용되었습니다');
+      }else{S.selectedClient=null;}
+      upd();
+    };
+    clientCard.appendChild(clientSel);
+    if(S.selectedClient){
+      let selCl=clients.find(x=>x.id===S.selectedClient);
+      if(selCl){
+        clientCard.appendChild(h('div',{style:{marginTop:'8px',padding:'8px 12px',background:'#E3F2FD',borderRadius:'8px',fontSize:'11px',color:'#1565C0',fontWeight:'700'}},
+          selCl.name+' 고객님'+(selCl.phone?' '+selCl.phone:'')+' - 제안서 마지막 페이지에 표시됩니다'
+        ));
+      }
+    }
+    w.appendChild(clientCard);
+  }
   // Date with validation
-  let dateInp=h('input',{type:'date',value:S.signDate,'aria-label':'Signature date',onChange:e=>{S.signDate=e.target.value;upd();}});
+  let dateInp=h('input',{type:'date',value:S.signDate,'aria-label':'서명 날짜',onChange:e=>{S.signDate=e.target.value;upd();}});
   // Name with validation
-  let nameInp2=h('input',{value:S.signName||'',placeholder:'이름','aria-label':'Signer name','aria-required':'true',onChange:e=>{S.signName=e.target.value;upd();}});
+  let nameInp2=h('input',{value:S.signName||'',placeholder:'이름','aria-label':'담당자명','aria-required':'true',onChange:e=>{S.signName=e.target.value;upd();}});
   nameInp2.oninput=function(){
     let r=validateField(this.value,{required:true,minLength:2});
     this.classList.toggle('invalid',!r.valid&&this.value.length>0);
     this.classList.toggle('valid',r.valid);
   };
   // Role
-  let roleInp=h('input',{value:S.signRole||'',placeholder:'직책','aria-label':'Signer role',onChange:e=>{S.signRole=e.target.value;upd();}});
+  let roleInp=h('input',{value:S.signRole||'',placeholder:'직책','aria-label':'직책',onChange:e=>{S.signRole=e.target.value;upd();}});
   // Phone with validation
-  let phoneInp2=h('input',{value:S.signPhone||'',placeholder:'연락처 (010-0000-0000)',type:'tel','aria-label':'Signer phone',onChange:e=>{S.signPhone=e.target.value;upd();}});
+  let phoneInp2=h('input',{value:S.signPhone||'',placeholder:'연락처 (010-0000-0000)',type:'tel','aria-label':'연락처',onChange:e=>{S.signPhone=e.target.value;upd();}});
   phoneInp2.oninput=function(){
     let r=validateField(this.value,{phone:true});
     this.classList.toggle('invalid',!r.valid&&this.value.length>0);
@@ -3600,7 +3649,7 @@ function renderSign(){
   w.append(lbl('날짜'),dateInp,lbl('담당자 *'),nameInp2,lbl('직책'),roleInp,lbl('연락처'),phoneInp2);
   // 서명 프리뷰
   let preview=h('div',{style:{marginTop:'16px',padding:'24px',border:'2px dashed #E5E7EB',borderRadius:'14px',textAlign:'center',background:'#FAFAFA'}});
-  preview.append(h('div',{style:{fontSize:'9px',color:'#D1D5DB',fontWeight:'600',letterSpacing:'3px',textTransform:'uppercase',marginBottom:'8px'}},'SIGNATURE'),h('div',{style:{fontSize:'20px',fontWeight:'900',color:'#374151'}},S.signName||'이름을 입력하세요'),h('div',{style:{fontSize:'11px',color:'#9CA3AF',marginTop:'4px'}},S.signRole));
+  preview.append(h('div',{style:{fontSize:'9px',color:'#D1D5DB',fontWeight:'600',letterSpacing:'3px',marginBottom:'8px'}},'서명 미리보기'),h('div',{style:{fontSize:'20px',fontWeight:'900',color:'#374151'}},S.signName||'이름을 입력하세요'),h('div',{style:{fontSize:'11px',color:'#9CA3AF',marginTop:'4px'}},S.signRole));
   w.appendChild(preview);
   return w;
 }
@@ -4000,10 +4049,25 @@ function renderPreview(){
     s.appendChild(h('div',{style:{display:'inline-block',marginTop:'.6em',padding:'.5em 2em',background:'linear-gradient(135deg,'+nv+','+ac+')',color:'#fff',fontWeight:'900',fontSize:'.9em',borderRadius:'.7em'}},'가맹 상담 신청'));
   }
   if(sv.sign){
-    s.appendChild(h('div',{style:{marginTop:'.8em',paddingTop:'.5em',borderTop:'1px solid #eee'}},
+    let signBlock=h('div',{style:{marginTop:'.8em',paddingTop:'.5em',borderTop:'1px solid #eee'}});
+    signBlock.append(
       h('div',{style:{fontSize:'1.3em',fontWeight:'900',color:nv,letterSpacing:'.15em'}},S.brand),
       h('div',{style:{fontSize:'.7em',color:'#555',marginTop:'.2em'}},S.signRole+' '+S.signName+(S.signPhone?' · '+S.signPhone:''))
-    ));
+    );
+    // 고객 정보 표시 (selectedClient)
+    if(S.selectedClient){
+      let allClients=getClients();
+      let selCl=allClients.find(x=>x.id===S.selectedClient);
+      if(selCl){
+        signBlock.appendChild(h('div',{style:{marginTop:'.6em',padding:'.5em 1em',background:'linear-gradient(135deg,#E3F2FD,#BBDEFB)',borderRadius:'.5em',border:'1px solid #90CAF9'}},
+          h('div',{style:{fontSize:'.8em',fontWeight:'800',color:'#1565C0',textAlign:'center'}},
+            selCl.name+' 고객님'+(selCl.phone?' '+selCl.phone:'')),
+          h('div',{style:{fontSize:'.65em',color:'#1976D2',textAlign:'center',marginTop:'.2em',fontWeight:'600'}},
+            '검토 부탁드립니다.')
+        ));
+      }
+    }
+    s.appendChild(signBlock);
   }
   slides.push(s);}
 
@@ -4026,7 +4090,7 @@ function lightboxKeyHandler(e){if(e.key==='Escape')closeLightbox();}
 function downloadPDF(){
   // Switch to preview mode
   if(S.mode!=='preview'){S.mode='preview';render();}
-  showToast('PDF preparing...');
+  showToast('PDF 준비 중...');
   // Hide UI controls
   let panel=document.querySelector('#previewView .pv-onoff');
   let ctrl=document.querySelector('#previewView>div:first-child');
@@ -4042,7 +4106,7 @@ function downloadPDF(){
     header.style.cssText='display:none;position:absolute;top:0;left:0;right:0;padding:6px 16px;background:linear-gradient(90deg,'+S.brandColor+'08,transparent);border-bottom:1px solid '+S.brandColor+'15;z-index:10';
     let hInner=document.createElement('div');
     hInner.style.cssText='display:flex;justify-content:space-between;align-items:center;font-size:8px;color:#999';
-    hInner.innerHTML='<span style="font-weight:700;color:'+S.brandColor+'">'+sanitize(S.brand)+'</span><span>'+sanitize(S.subtitle||'Franchise Proposal')+'</span>';
+    hInner.innerHTML='<span style="font-weight:700;color:'+S.brandColor+'">'+sanitize(S.brand)+'</span><span>'+sanitize(S.subtitle||'프랜차이즈 가맹 제안서')+'</span>';
     header.appendChild(hInner);
     sl.insertBefore(header,sl.firstChild);
   });

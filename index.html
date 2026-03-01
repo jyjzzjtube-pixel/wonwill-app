@@ -218,6 +218,12 @@ background:#333;color:#fff;font-size:12px;font-weight:600;z-index:300;opacity:0;
 </div>
 
 <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px">
+<div style="font-size:12px;font-weight:700;margin-bottom:8px">💾 로컬 백업/복원</div>
+<div style="display:flex;gap:6px;margin-bottom:10px">
+<button class="btn" style="flex:1;background:#26a69a;color:#fff;font-size:12px" onclick="exportLocalBackup()">💾 로컬 백업</button>
+<button class="btn" style="flex:1;background:var(--info);color:#fff;font-size:12px" onclick="document.getElementById('localBackupInput').click()">📂 로컬 복원</button>
+</div>
+<input type="file" id="localBackupInput" accept=".json" style="display:none" onchange="importLocalBackup(event)">
 <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--danger)">🗑 데이터 관리</div>
 <button class="btn" style="width:100%;background:var(--danger);color:#fff;font-size:12px" onclick="resetAllData()">전체 초기화 (비밀번호 필요)</button>
 </div>
@@ -1332,6 +1338,39 @@ function applyAreaResult() {
     document.getElementById('areaDetail').value = txt.replace(/^【.*?】.*?\n\n/,'').trim();
   }
   toast('✅ 요약+상세에 적용 완료');
+}
+
+// ========== 로컬 백업/복원 ==========
+function exportLocalBackup(){
+  const data = {};
+  try { const fd = localStorage.getItem('charDataV3'); if(fd) data.charDataV3 = JSON.parse(fd); } catch(e){}
+  try { const ks = localStorage.getItem('charKeysV3'); if(ks) data.charKeysV3 = JSON.parse(ks); } catch(e){}
+  if(!data.charDataV3 && !data.charKeysV3){ toast('⚠️ 백업할 데이터가 없습니다'); return; }
+  data._backup_date = new Date().toISOString();
+  data._app = 'Wonwill Cha\'R v3.1';
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  const d = new Date(); const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Wonwill_Backup_'+ds+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('💾 백업 완료');
+}
+function importLocalBackup(ev){
+  const file = ev.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.charDataV3 && !data.charKeysV3){ toast('⚠️ 유효하지 않은 백업 파일'); return; }
+      if(!confirm('백업 데이터를 복원하시겠습니까?\n현재 데이터가 덮어씌워집니다.')) return;
+      if(data.charDataV3) localStorage.setItem('charDataV3', JSON.stringify(data.charDataV3));
+      if(data.charKeysV3) localStorage.setItem('charKeysV3', JSON.stringify(data.charKeysV3));
+      toast('✅ 복원 완료'); setTimeout(()=>location.reload(),500);
+    } catch(err){ toast('⚠️ 파일 파싱 오류'); }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
 }
 
 // ========== 비밀번호 보호 전체 초기화 ==========

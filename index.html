@@ -217,6 +217,10 @@ background:#333;color:#fff;font-size:12px;font-weight:600;z-index:300;opacity:0;
 <div id="driveStatus" style="font-size:10px;color:var(--text3);margin-top:4px;text-align:center"></div>
 </div>
 
+<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px">
+<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--danger)">🗑 데이터 관리</div>
+<button class="btn" style="width:100%;background:var(--danger);color:#fff;font-size:12px" onclick="resetAllData()">전체 초기화 (비밀번호 필요)</button>
+</div>
 <div style="display:flex;gap:6px;margin-top:14px">
 <button class="btn bo" style="flex:1" onclick="document.getElementById('apiModal').classList.remove('show')">닫기</button>
 <button class="btn bp" style="flex:1" onclick="saveApiKeys()">💾 저장</button>
@@ -1328,6 +1332,16 @@ function applyAreaResult() {
     document.getElementById('areaDetail').value = txt.replace(/^【.*?】.*?\n\n/,'').trim();
   }
   toast('✅ 요약+상세에 적용 완료');
+}
+
+// ========== 비밀번호 보호 전체 초기화 ==========
+function resetAllData(){
+  const pw=prompt('전체 초기화를 위해 비밀번호를 입력하세요:');
+  if(pw===null)return;
+  if(pw!=='0729'){toast('⚠️ 비밀번호가 틀렸습니다');return}
+  if(!confirm('모든 데이터와 API 키를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'))return;
+  try{localStorage.removeItem('charDataV3');localStorage.removeItem('charKeysV3')}catch(e){console.warn('초기화 오류:',e)}
+  toast('🗑 전체 초기화 완료');setTimeout(()=>location.reload(),500);
 }
 
 // ========== 저장/로드 ==========
